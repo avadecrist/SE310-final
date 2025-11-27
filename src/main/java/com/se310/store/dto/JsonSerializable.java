@@ -11,7 +11,7 @@ package com.se310.store.dto;
  * @author  Sergey L. Sundukovskiy
  * @version 1.0
  * @since   2025-11-13
- */
+ */ 
 public interface JsonSerializable {
 
     //TODO: Implement Strategy Pattern for JSON serialization
@@ -20,5 +20,8 @@ public interface JsonSerializable {
      *
      * @return JSON string representation of this object
      */
-    String toJson();
+    default String toJson(){
+        return JsonHelper.toJson(this); //Delegates to the shared Gson configuration
+    }
+
 }

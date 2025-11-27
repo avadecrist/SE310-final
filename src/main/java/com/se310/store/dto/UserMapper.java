@@ -20,7 +20,7 @@ public class UserMapper {
     /**
      * UserDTO - Data Transfer Object for User
      */
-    public static class UserDTO {
+    public static class UserDTO implements JsonSerializable {
         private String email;
         private String name;
         private String role;
@@ -32,6 +32,14 @@ public class UserMapper {
             this.email = email;
             this.name = name;
             this.role = role;
+        }
+
+        @Override
+        public String toJson() {
+            UserDTO copy = new UserDTO(email, name,
+            role != null ? role.toLowerCase() : null);
+
+            return JsonHelper.toJson(copy);
         }
 
         public String getEmail() {

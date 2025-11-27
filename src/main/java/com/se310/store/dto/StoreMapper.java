@@ -19,7 +19,7 @@ public class StoreMapper {
     /**
      * StoreDTO - Data Transfer Object for Store
      */
-    public static class StoreDTO {
+    public static class StoreDTO implements JsonSerializable {
         private String id;
         private String address;
         private String description;
@@ -31,6 +31,13 @@ public class StoreMapper {
             this.id = id;
             this.address = address;
             this.description = description;
+        }
+
+        @Override
+        public String toJson() {
+            StoreDTO copy = new StoreDTO(id, address,
+            description != null ? description.toLowerCase() : null);
+            return JsonHelper.toJson(copy);
         }
 
         public String getId() {
