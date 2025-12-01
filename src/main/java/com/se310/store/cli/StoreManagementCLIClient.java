@@ -166,6 +166,8 @@ public class StoreManagementCLIClient {
         System.out.print("Enter your choice: ");
     }
 
+    // ==================== STORE OPERATIONS ====================
+
     /**
      * Store operations - Uses REST API
      */
@@ -180,7 +182,150 @@ public class StoreManagementCLIClient {
         System.out.print("Enter your choice: ");
 
         String choice = scanner.nextLine().trim();
+
+        try {
+            switch (choice) {
+                case "1":
+                    listStores();
+                    break;
+                case "2":
+                    viewStoreDetails();
+                    break;
+                case "3":
+                    createStore();
+                    break;
+                case "4":
+                    updateStore();
+                    break;
+                case "5":
+                    deleteStore();
+                    break;
+                case "0":
+                    printMainMenu();
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("[X] Error during store operation: " + e.getMessage());
+        }
     }
+
+    private static void listStores() throws Exception {
+        System.out.println("\n--- List of Stores ---");
+
+        String json = sendRequest("GET", "/stores", null);
+
+        System.out.println(json);
+    }
+
+    private static void viewStoreDetails() throws Exception {
+        System.out.print("Enter Store ID: ");
+        String storeId = scanner.nextLine().trim();
+
+        if (storeId.isEmpty()) {
+            System.out.println("[X] Store ID cannot be empty");
+            return;
+        }
+
+        String json = sendRequest("GET", "/stores/" + storeId, null);
+
+        System.out.println("\n--- Store Details ---");
+        System.out.println(json);
+    }
+
+    private static void createStore() throws Exception {
+        System.out.print("Enter Store ID: ");
+        String storeId = scanner.nextLine().trim();
+
+        System.out.print("Enter Store Name: ");
+        String name = scanner.nextLine().trim();
+
+        System.out.print("Enter Store Address: ");
+        String address = scanner.nextLine().trim();
+
+        if (storeId.isEmpty() || name.isEmpty() || address.isEmpty()) {
+            System.out.println("[X] Store ID, Name, and Address cannot be empty");
+            return;
+        }
+
+
+        // Build endpoint: /stores?storeId=xxx&name=xxx&address=xxx
+        String endpoint = "/stores"
+                + "?storeId=" + encode(storeId)
+                + "&name=" + encode(name)
+                + "&address=" + encode(address);
+
+        // Controller reads parameters via getParameter(), so body must be null
+        String json = sendRequest("POST", endpoint, null);
+
+        System.out.println("\n--- Created Store ---");
+        System.out.println(json);
+    }
+
+    private static void updateStore() throws Exception {
+        System.out.println("\n=== Update Store ===");
+
+        System.out.print("Enter Store ID to update: ");
+        String storeId = scanner.nextLine().trim();
+
+        if (storeId.isEmpty()) {
+            System.out.println("[X] Store ID cannot be empty");
+            return;
+        }
+
+        System.out.print("Enter new description (or leave blank to keep current description): ");
+        String description = scanner.nextLine().trim();
+
+        System.out.print("Enter new address (leave blank to keep current address): ");
+        String address = scanner.nextLine().trim();
+
+        if (description.isEmpty() && address.isEmpty()) {
+            System.out.println("[X] Nothing to update. Both fields are blank.");
+            return;
+        }
+
+        // Start with path: /stores/{storeId}
+        String path = "/stores/"
+                + encode(storeId);
+        // For any blank address or description parameter
+        boolean hasQueryParam = false;
+        String endpoint = path;
+
+        if (!description.isEmpty()) {
+            endpoint = endpoint + "?description=" + encode(description);
+            hasQueryParam = true;
+        }
+
+        if (!address.isEmpty()) {
+            endpoint = endpoint + (hasQueryParam ? "&" : "?") + "address=" + encode(address);
+        }
+
+        // PUT with query params, body should be null
+        String json = sendRequest("PUT", endpoint, null);
+
+        System.out.println("\n--- Updated Store ---");
+        System.out.println(json);
+    }
+
+    private static void deleteStore() throws Exception {
+        System.out.print("Enter Store ID to delete: ");
+        String storeId = scanner.nextLine().trim();
+
+        if (storeId.isEmpty()) {
+            System.out.println("[X] Store ID cannot be empty");
+            return;
+        }
+
+        String json = sendRequest("DELETE", "/stores/" + storeId, null);
+
+        System.out.println("\n--- Deleted Store ---");
+        System.out.println(json);
+    }
+
+
+    // ==================== USER OPERATIONS ====================
 
     /**
      * User operations - Uses REST API
@@ -195,8 +340,88 @@ public class StoreManagementCLIClient {
 
         String choice = scanner.nextLine().trim();
 
+        switch (choice) {
+            case "1":
+                listUsers();
+                break;
+            case "2":
+                viewUserDetails();
+                break;
+            case "3":
+                registerUser();
+                break;
+            case "0":
+                printMainMenu();
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
     }
 
+    private static void listUsers() {
+        System.out.println("\n--- List of Users ---");
+
+        String json = sendRequest("GET", "/users", null);
+
+        System.out.println(json);
+    }
+
+    private static void viewUserDetails() {
+        System.out.print("Enter User Email: ");
+        String email = scanner.nextLine().trim();
+
+        if (email.isEmpty()) {
+            System.out.println("[X] User email cannot be empty");
+            return;
+        }
+
+        String json = sendRequest("GET", "/users/" + email, null);
+
+        System.out.println("\n--- User Details ---");
+        System.out.println(json);
+    }
+
+//this uses a non-null body??
+    private static void registerUser() {
+        System.out.print("Enter User Email: ");
+        String email = scanner.nextLine().trim();
+
+        System.out.print("Enter User Password: ");
+        String password = scanner.nextLine().trim();
+
+        System.out.print("Enter User Name: ");
+        String name = scanner.nextLine().trim();
+
+        System.out.print("Enter User Role (ADMIN/USER): ");
+        String role = scanner.nextLine().trim();
+
+        if (email.isEmpty() || password.isEmpty() || name.isEmpty()) {
+            System.out.println("[X] Email, Password, and Name cannot be empty");
+            return;
+        }
+
+        String body = String.format("?email=xxx&password=xxx&name=xxx&role=xxx",
+                urlEncode(email), urlEncode(password), urlEncode(name), urlEncode(role));
+
+        String json = sendRequest("POST", "/users" + body, null);
+
+        System.out.println("\n--- Registered User ---");
+        System.out.println(json);
+    }
+
+    // Helper method to ensure endpoint parameters are in URL format
+    private static String encode(String parameter) {
+        if (parameter == null) {
+            return "";
+        }
+        parameter = parameter.replace(" ", "+")
+                             .replace("&", "%26")
+                             .replace("#", "%23");
+        return parameter;
+    }
+
+
+    // ==================== PRODUCT OPERATIONS ====================
     /**
      * Product operations - Uses StoreService directly
      */
@@ -209,8 +434,81 @@ public class StoreManagementCLIClient {
 
         String choice = scanner.nextLine().trim();
 
+        switch (choice) {
+            case "1":
+                viewProduct();
+                break;
+            case "2":
+                createProduct();
+                break;
+            case "0":
+                printMainMenu();
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    }
+//TEMPORARY METHOD
+    private static void viewProduct() {
+        System.out.print("Enter Product ID: ");
+        String productId = scanner.nextLine().trim();
+
+        if (productId.isEmpty()) {
+            System.out.println("[X] Product ID cannot be empty");
+            return;
+        }
+
+        Optional<Product> productOpt = storeService.getProductById(productId);
+        if (productOpt.isPresent()) {
+            Product product = productOpt.get();
+            System.out.println("\n--- Product Details ---");
+            System.out.println(product);
+        } else {
+            System.out.println("[X] Product not found with ID: " + productId);
+        }
+    }
+//TEMPORARY METHOD
+    private static void createProduct() {
+        System.out.print("Enter Product ID: ");
+        String productId = scanner.nextLine().trim();
+        System.out.print("Enter Product Name: ");
+        String name = scanner.nextLine().trim();
+        System.out.print("Enter Product Description: ");
+        String description = scanner.nextLine().trim();
+        System.out.print("Enter Product Size: ");
+        String size = scanner.nextLine().trim();
+        System.out.print("Enter Product Category: ");
+        String category = scanner.nextLine().trim();
+        System.out.print("Enter Product Price: ");
+        String priceStr = scanner.nextLine().trim();
+        System.out.print("Enter Product Temperature (COLD/ROOM/HEATED): ");
+        String tempStr = scanner.nextLine().trim();
+        if (productId.isEmpty() || name.isEmpty() || priceStr.isEmpty() || tempStr.isEmpty()) {
+            System.out.println("[X] Product ID, Name, Price, and Temperature cannot be empty");
+            return;
+        }
+        Double price;
+        try {
+            price = Double.parseDouble(priceStr);
+        } catch (NumberFormatException e) {
+            System.out.println("[X] Invalid price format");
+            return;
+        }
+        Temperature temperature;
+        try {
+            temperature = Temperature.valueOf(tempStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            System.out.println("[X] Invalid temperature value");
+            return;
+        }
+        Product product = new Product(productId, name, description, size, category, price, temperature);
+        storeService.addProduct(product);
+        System.out.println("\n--- Created Product ---");
+        System.out.println(product);
     }
 
+
+    // ==================== CUSTOMER OPERATIONS ====================
     /**
      * Customer operations - Uses StoreService directly
      */
@@ -223,6 +521,58 @@ public class StoreManagementCLIClient {
 
         String choice = scanner.nextLine().trim();
 
+        switch (choice) {
+            case "1":
+                viewCustomer();
+                break;
+            case "2":
+                registerCustomer();
+                break;
+            case "0":
+                printMainMenu();
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    }
+
+//TEMPORARY METHOD
+    private static void viewCustomer() {
+        System.out.print("Enter Customer ID: ");
+        String customerId = scanner.nextLine().trim();
+
+        if (customerId.isEmpty()) {
+            System.out.println("[X] Customer ID cannot be empty");
+            return;
+        }
+
+        Optional<Customer> customerOpt = storeService.getCustomerById(customerId);
+        if (customerOpt.isPresent()) {
+            Customer customer = customerOpt.get();
+            System.out.println("\n--- Customer Details ---");
+            System.out.println(customer);
+        } else {
+            System.out.println("[X] Customer not found with ID: " + customerId);
+        }
+    }
+//TEMPORARY METHOD
+    private static void registerCustomer() {
+        System.out.print("Enter Customer ID: ");
+        String customerId = scanner.nextLine().trim();
+        System.out.print("Enter Customer Name: ");
+        String name = scanner.nextLine().trim();
+        System.out.print("Enter Customer Email: ");
+        String email = scanner.nextLine().trim();
+
+        if (customerId.isEmpty() || name.isEmpty() || email.isEmpty()) {
+            System.out.println("[X] Customer ID, Name, and Email cannot be empty");
+            return;
+        }
+
+        Customer customer = new Customer(customerId, name, email);
+        storeService.addCustomer(customer);
+        System.out.println("\n--- Registered Customer ---");
+        System.out.println(customer);
     }
 
     private static void viewDocumentation() {

@@ -93,7 +93,7 @@ public class UserMapper {
                 user.setRole(role);
             } catch (IllegalArgumentException e) {
                 // Invalid role string; keep default role (USER)
-                System.out.println("Invalid role '" + roleString + "'... using default USER role.");
+                System.err.println("Invalid role '" + roleString + "'... using default USER role.");
             }
         }
 
