@@ -33,6 +33,43 @@ public abstract class BaseServlet extends HttpServlet {
     //TODO: Implement Template Method Pattern for handling HTTP requests and responses
 
     /**
+     * Helper method to get JSON body from request and parse it.
+     * Centralizes request body reading and basic error handling.
+     * 
+     * @param request The HTTP request
+     * @return JSON string from request body
+     * @throws IOException If reading fails
+     */
+    protected String getJsonBody(HttpServletRequest request) throws IOException {
+        return readRequestBody(request);
+    }
+    
+    /**
+     * Helper method to handle common servlet exceptions.
+     * Maps exceptions to appropriate HTTP status codes.
+     * 
+     * @param response The HTTP response
+     * @param e The exception to handle
+     * @throws IOException If writing response fails
+     */
+    protected void handleException(HttpServletResponse response, Exception e) throws IOException {
+        // Default to 500 Internal Server Error
+        int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+        String message = "Internal server error";
+        
+        // Map specific exceptions to appropriate status codes
+        if (e instanceof IllegalArgumentException) {
+            statusCode = HttpServletResponse.SC_BAD_REQUEST;
+            message = "Invalid request: " + e.getMessage();
+        } else if (e.getMessage() != null && e.getMessage().contains("not found")) {
+            statusCode = HttpServletResponse.SC_NOT_FOUND;
+            message = e.getMessage();
+        }
+        
+        sendErrorResponse(response, statusCode, message);
+    }
+
+    /**
      * Read the request body as a string.
      * Used for parsing JSON payloads from POST/PUT requests.
      *
@@ -75,7 +112,23 @@ public abstract class BaseServlet extends HttpServlet {
      * @throws IOException If writing fails
      */
     protected void sendJsonResponse(HttpServletResponse response, Object object, int statusCode) throws IOException {
-        //TODO: Implement Template Method Pattern for sending JSON responses
+        // Set response type and encoding
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setStatus(statusCode);
+        
+        // Convert to JSON string
+        String jsonString;
+        if (object instanceof JsonSerializable) {
+            jsonString = ((JsonSerializable) object).toJson();
+        } else {
+            jsonString = JsonHelper.toJson(object);
+        }
+        
+        // Write response
+        PrintWriter writer = response.getWriter();
+        writer.write(jsonString);
+        writer.flush();
     }
 
     /**
@@ -88,6 +141,9 @@ public abstract class BaseServlet extends HttpServlet {
      * @throws IOException If writing fails
      */
     protected void sendErrorResponse(HttpServletResponse response, int statusCode, String message) throws IOException {
+        // Create error object and send as JSON
+        ErrorResponse error = new ErrorResponse(statusCode, message);
+        sendJsonResponse(response, error, statusCode);
     }
 
     /**
@@ -112,7 +168,7 @@ public abstract class BaseServlet extends HttpServlet {
      * Simple error response object for consistent error formatting.
      */
     @Getter
-    private static class ErrorResponse {
+    private static class ErrorResponse implements JsonSerializable {
         private final int status;
         private final String message;
         private final long timestamp;

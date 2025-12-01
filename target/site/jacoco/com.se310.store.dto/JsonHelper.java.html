@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JsonHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.dto</a> &gt; <span class="el_source">JsonHelper.java</span></div><h1>JsonHelper.java</h1><pre class="source lang-java linenums">package com.se310.store.dto;
+
+import com.google.gson.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Centralized Gson configuration for JSON serialization/deserialization.
+ * This class demonstrates the DRY (Don't Repeat Yourself) principle by providing
+ * a single source of truth for Gson configuration across all DTOs.
+ *
+ * Benefits:
+ * - Eliminates code duplication
+ * - Ensures consistent JSON formatting across all DTOs
+ * - Makes it easy to update serialization behavior in one place
+ * - Follows the Single Responsibility Principle
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-13
+ */
+public class JsonHelper {
+
+    // Singleton Gson instance with custom type adapters
+    // Configured once and shared by all DTOs
+<span class="nc" id="L28">    private static final Gson GSON = new GsonBuilder()</span>
+<span class="nc" id="L29">            .setPrettyPrinting()  // Makes JSON output human-readable</span>
+<span class="nc" id="L30">            .serializeNulls()     // Include null fields in JSON output</span>
+            // Custom serializer for LocalDate (converts to ISO-8601 format: yyyy-MM-dd)
+<span class="nc" id="L32">            .registerTypeAdapter(LocalDate.class, (JsonSerializer&lt;LocalDate&gt;)</span>
+<span class="nc" id="L33">                    (src, typeOfSrc, context) -&gt; new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_DATE)))</span>
+            // Custom deserializer for LocalDate (parses from ISO-8601 format)
+<span class="nc" id="L35">            .registerTypeAdapter(LocalDate.class, (JsonDeserializer&lt;LocalDate&gt;)</span>
+<span class="nc" id="L36">                    (json, typeOfT, context) -&gt; LocalDate.parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_DATE))</span>
+            // Custom serializer for LocalDateTime (converts to ISO-8601 format with time)
+<span class="nc" id="L38">            .registerTypeAdapter(LocalDateTime.class, (JsonSerializer&lt;LocalDateTime&gt;)</span>
+<span class="nc" id="L39">                    (src, typeOfSrc, context) -&gt; new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))</span>
+            // Custom deserializer for LocalDateTime (parses from ISO-8601 format with time)
+<span class="nc" id="L41">            .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer&lt;LocalDateTime&gt;)</span>
+<span class="nc" id="L42">                    (json, typeOfT, context) -&gt; LocalDateTime.parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))</span>
+<span class="nc" id="L43">            .create();</span>
+
+    // Private constructor to prevent instantiation
+<span class="nc" id="L46">    private JsonHelper() {</span>
+<span class="nc" id="L47">        throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated&quot;);</span>
+    }
+
+    /**
+     * Get the configured Gson instance.
+     * This method provides access to the shared Gson instance for all DTOs.
+     *
+     * @return The configured Gson instance
+     */
+    public static Gson getGson() {
+<span class="nc" id="L57">        return GSON;</span>
+    }
+
+    /**
+     * Convert an object to JSON string using the shared Gson instance.
+     *
+     * @param object The object to serialize
+     * @return JSON string representation
+     */
+    public static String toJson(Object object) {
+<span class="nc" id="L67">        return GSON.toJson(object);</span>
+    }
+
+    /**
+     * Convert a JSON string to an object of the specified type.
+     *
+     * @param json The JSON string to deserialize
+     * @param classOfT The class of the target object
+     * @param &lt;T&gt; The type of the target object
+     * @return The deserialized object
+     */
+    public static &lt;T&gt; T fromJson(String json, Class&lt;T&gt; classOfT) {
+<span class="nc" id="L79">        return GSON.fromJson(json, classOfT);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

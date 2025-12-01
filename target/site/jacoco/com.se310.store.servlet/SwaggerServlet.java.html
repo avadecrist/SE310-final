@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SwaggerServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.servlet</a> &gt; <span class="el_source">SwaggerServlet.java</span></div><h1>SwaggerServlet.java</h1><pre class="source lang-java linenums">package com.se310.store.servlet;
+
+import com.se310.store.model.User;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * SwaggerServlet - Serves OpenAPI documentation
+ *
+ * This servlet serves the OpenAPI specification file (openapi.yaml) which documents
+ * all REST API endpoints. The specification can be used with Swagger UI or other
+ * OpenAPI tools to visualize and test the API.
+ *
+ * Endpoints:
+ * - GET /api/docs/openapi.yaml - Returns the OpenAPI specification
+ * - GET /api/docs or /api/docs/ - Returns HTML page with link to Swagger UI
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-11
+ */
+<span class="nc" id="L28">public class SwaggerServlet extends HttpServlet {</span>
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+<span class="nc" id="L32">        String requestURI = request.getRequestURI();</span>
+<span class="nc" id="L33">        String pathInfo = request.getPathInfo();</span>
+
+        // Debug logging
+<span class="nc" id="L36">        System.out.println(&quot;SwaggerServlet - RequestURI: &quot; + requestURI + &quot;, PathInfo: &quot; + pathInfo);</span>
+
+        // Handle /api-docs endpoint - serve raw YAML for Swagger UI
+<span class="nc bnc" id="L39" title="All 6 branches missed.">        if (requestURI.endsWith(&quot;/api-docs&quot;) || (pathInfo != null &amp;&amp; pathInfo.equals(&quot;/api-docs&quot;))) {</span>
+<span class="nc" id="L40">            serveRawOpenAPISpec(response);</span>
+<span class="nc" id="L41">            return;</span>
+        }
+
+        // Handle /api-docs/endpoints - serve HTML display of endpoints
+<span class="nc bnc" id="L45" title="All 6 branches missed.">        if (requestURI.contains(&quot;/api-docs/endpoints&quot;) || (pathInfo != null &amp;&amp; pathInfo.equals(&quot;/api-docs/endpoints&quot;))) {</span>
+<span class="nc" id="L46">            serveOpenAPISpec(response);</span>
+<span class="nc" id="L47">            return;</span>
+        }
+
+        // Handle /swagger-ui/ endpoint - serve the UI
+<span class="nc bnc" id="L51" title="All 8 branches missed.">        if (requestURI.contains(&quot;/swagger-ui&quot;) || pathInfo == null || pathInfo.equals(&quot;/&quot;) || pathInfo.isEmpty()) {</span>
+<span class="nc" id="L52">            serveSwaggerUI(request, response);</span>
+<span class="nc" id="L53">            return;</span>
+        }
+
+        // Not found
+<span class="nc" id="L57">        response.sendError(HttpServletResponse.SC_NOT_FOUND);</span>
+<span class="nc" id="L58">    }</span>
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+<span class="nc" id="L62">        String requestURI = request.getRequestURI();</span>
+
+        // Handle logout request
+<span class="nc bnc" id="L65" title="All 4 branches missed.">        if (requestURI.contains(&quot;/swagger-ui/logout&quot;) || requestURI.contains(&quot;/api-docs/logout&quot;)) {</span>
+<span class="nc" id="L66">            handleLogout(response);</span>
+<span class="nc" id="L67">            return;</span>
+        }
+
+<span class="nc" id="L70">        response.sendError(HttpServletResponse.SC_NOT_FOUND);</span>
+<span class="nc" id="L71">    }</span>
+
+    /**
+     * Handle logout by returning 401 to force re-authentication
+     */
+    private void handleLogout(HttpServletResponse response) throws IOException {
+        // Return 401 with WWW-Authenticate header to trigger browser's login dialog
+<span class="nc" id="L78">        response.setHeader(&quot;WWW-Authenticate&quot;, &quot;Basic realm=\&quot;Smart Store Application\&quot;&quot;);</span>
+<span class="nc" id="L79">        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="nc" id="L80">        response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L81">        response.getWriter().write(&quot;{\&quot;message\&quot;: \&quot;Logged out successfully. Please refresh to login as a different user.\&quot;}&quot;);</span>
+<span class="nc" id="L82">    }</span>
+
+    /**
+     * Serves the Swagger UI HTML page with authentication info and logout capability.
+     * Uses CDN-hosted Swagger UI for simplicity.
+     */
+    private void serveSwaggerUI(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // Extract authenticated user info
+<span class="nc" id="L90">        User authenticatedUser = (User) request.getAttribute(&quot;authenticatedUser&quot;);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        String userEmail = authenticatedUser != null ? authenticatedUser.getEmail() : &quot;Unknown&quot;;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        String userName = authenticatedUser != null ? authenticatedUser.getName() : &quot;Unknown User&quot;;</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        String userRole = authenticatedUser != null ? authenticatedUser.getRole().name() : &quot;UNKNOWN&quot;;</span>
+
+<span class="nc" id="L95">        response.setContentType(&quot;text/html&quot;);</span>
+<span class="nc" id="L96">        PrintWriter out = response.getWriter();</span>
+
+<span class="nc" id="L98">        out.println(&quot;&lt;!DOCTYPE html&gt;&quot;);</span>
+<span class="nc" id="L99">        out.println(&quot;&lt;html lang=\&quot;en\&quot;&gt;&quot;);</span>
+<span class="nc" id="L100">        out.println(&quot;&lt;head&gt;&quot;);</span>
+<span class="nc" id="L101">        out.println(&quot;    &lt;meta charset=\&quot;UTF-8\&quot;&gt;&quot;);</span>
+<span class="nc" id="L102">        out.println(&quot;    &lt;title&gt;Smart Store API - Swagger UI&lt;/title&gt;&quot;);</span>
+<span class="nc" id="L103">        out.println(&quot;    &lt;link rel=\&quot;stylesheet\&quot; href=\&quot;https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css\&quot;&gt;&quot;);</span>
+<span class="nc" id="L104">        out.println(&quot;    &lt;style&gt;&quot;);</span>
+<span class="nc" id="L105">        out.println(&quot;        body {&quot;);</span>
+<span class="nc" id="L106">        out.println(&quot;            margin: 0;&quot;);</span>
+<span class="nc" id="L107">        out.println(&quot;            padding: 0;&quot;);</span>
+<span class="nc" id="L108">        out.println(&quot;            font-family: -apple-system, BlinkMacSystemFont, \&quot;Segoe UI\&quot;, Roboto, sans-serif;&quot;);</span>
+<span class="nc" id="L109">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L110">        out.println(&quot;        .topbar { display: none; }&quot;);</span>
+<span class="nc" id="L111">        out.println(&quot;        .auth-banner {&quot;);</span>
+<span class="nc" id="L112">        out.println(&quot;            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);&quot;);</span>
+<span class="nc" id="L113">        out.println(&quot;            color: white;&quot;);</span>
+<span class="nc" id="L114">        out.println(&quot;            padding: 15px 30px;&quot;);</span>
+<span class="nc" id="L115">        out.println(&quot;            display: flex;&quot;);</span>
+<span class="nc" id="L116">        out.println(&quot;            justify-content: space-between;&quot;);</span>
+<span class="nc" id="L117">        out.println(&quot;            align-items: center;&quot;);</span>
+<span class="nc" id="L118">        out.println(&quot;            box-shadow: 0 2px 10px rgba(0,0,0,0.1);&quot;);</span>
+<span class="nc" id="L119">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L120">        out.println(&quot;        .auth-info {&quot;);</span>
+<span class="nc" id="L121">        out.println(&quot;            display: flex;&quot;);</span>
+<span class="nc" id="L122">        out.println(&quot;            flex-direction: column;&quot;);</span>
+<span class="nc" id="L123">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L124">        out.println(&quot;        .auth-info-title {&quot;);</span>
+<span class="nc" id="L125">        out.println(&quot;            font-size: 14px;&quot;);</span>
+<span class="nc" id="L126">        out.println(&quot;            opacity: 0.9;&quot;);</span>
+<span class="nc" id="L127">        out.println(&quot;            margin-bottom: 5px;&quot;);</span>
+<span class="nc" id="L128">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L129">        out.println(&quot;        .auth-info-details {&quot;);</span>
+<span class="nc" id="L130">        out.println(&quot;            font-size: 16px;&quot;);</span>
+<span class="nc" id="L131">        out.println(&quot;            font-weight: 600;&quot;);</span>
+<span class="nc" id="L132">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L133">        out.println(&quot;        .auth-info-role {&quot;);</span>
+<span class="nc" id="L134">        out.println(&quot;            display: inline-block;&quot;);</span>
+<span class="nc" id="L135">        out.println(&quot;            background: rgba(255,255,255,0.2);&quot;);</span>
+<span class="nc" id="L136">        out.println(&quot;            padding: 3px 10px;&quot;);</span>
+<span class="nc" id="L137">        out.println(&quot;            border-radius: 12px;&quot;);</span>
+<span class="nc" id="L138">        out.println(&quot;            font-size: 12px;&quot;);</span>
+<span class="nc" id="L139">        out.println(&quot;            margin-left: 10px;&quot;);</span>
+<span class="nc" id="L140">        out.println(&quot;            font-weight: 500;&quot;);</span>
+<span class="nc" id="L141">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L142">        out.println(&quot;        .logout-btn {&quot;);</span>
+<span class="nc" id="L143">        out.println(&quot;            background: rgba(255,255,255,0.2);&quot;);</span>
+<span class="nc" id="L144">        out.println(&quot;            border: 2px solid white;&quot;);</span>
+<span class="nc" id="L145">        out.println(&quot;            color: white;&quot;);</span>
+<span class="nc" id="L146">        out.println(&quot;            padding: 10px 20px;&quot;);</span>
+<span class="nc" id="L147">        out.println(&quot;            border-radius: 6px;&quot;);</span>
+<span class="nc" id="L148">        out.println(&quot;            cursor: pointer;&quot;);</span>
+<span class="nc" id="L149">        out.println(&quot;            font-size: 14px;&quot;);</span>
+<span class="nc" id="L150">        out.println(&quot;            font-weight: 600;&quot;);</span>
+<span class="nc" id="L151">        out.println(&quot;            transition: all 0.3s ease;&quot;);</span>
+<span class="nc" id="L152">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L153">        out.println(&quot;        .logout-btn:hover {&quot;);</span>
+<span class="nc" id="L154">        out.println(&quot;            background: white;&quot;);</span>
+<span class="nc" id="L155">        out.println(&quot;            color: #667eea;&quot;);</span>
+<span class="nc" id="L156">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L157">        out.println(&quot;    &lt;/style&gt;&quot;);</span>
+<span class="nc" id="L158">        out.println(&quot;&lt;/head&gt;&quot;);</span>
+<span class="nc" id="L159">        out.println(&quot;&lt;body&gt;&quot;);</span>
+<span class="nc" id="L160">        out.println(&quot;    &lt;div class=\&quot;auth-banner\&quot;&gt;&quot;);</span>
+<span class="nc" id="L161">        out.println(&quot;        &lt;div class=\&quot;auth-info\&quot;&gt;&quot;);</span>
+<span class="nc" id="L162">        out.println(&quot;            &lt;div class=\&quot;auth-info-title\&quot;&gt;Authenticated as:&lt;/div&gt;&quot;);</span>
+<span class="nc" id="L163">        out.println(&quot;            &lt;div class=\&quot;auth-info-details\&quot;&gt;&quot;);</span>
+<span class="nc" id="L164">        out.println(&quot;                &quot; + userName + &quot; (&quot; + userEmail + &quot;)&quot;);</span>
+<span class="nc" id="L165">        out.println(&quot;                &lt;span class=\&quot;auth-info-role\&quot;&gt;&quot; + userRole + &quot;&lt;/span&gt;&quot;);</span>
+<span class="nc" id="L166">        out.println(&quot;            &lt;/div&gt;&quot;);</span>
+<span class="nc" id="L167">        out.println(&quot;        &lt;/div&gt;&quot;);</span>
+<span class="nc" id="L168">        out.println(&quot;        &lt;button class=\&quot;logout-btn\&quot; onclick=\&quot;openInNewWindow()\&quot;&gt;Switch User (New Window)&lt;/button&gt;&quot;);</span>
+<span class="nc" id="L169">        out.println(&quot;    &lt;/div&gt;&quot;);</span>
+<span class="nc" id="L170">        out.println(&quot;    &lt;div id=\&quot;swagger-ui\&quot;&gt;&lt;/div&gt;&quot;);</span>
+<span class="nc" id="L171">        out.println(&quot;    &lt;script src=\&quot;https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js\&quot;&gt;&lt;/script&gt;&quot;);</span>
+<span class="nc" id="L172">        out.println(&quot;    &lt;script src=\&quot;https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js\&quot;&gt;&lt;/script&gt;&quot;);</span>
+<span class="nc" id="L173">        out.println(&quot;    &lt;script&gt;&quot;);</span>
+<span class="nc" id="L174">        out.println(&quot;        window.onload = function() {&quot;);</span>
+<span class="nc" id="L175">        out.println(&quot;            const ui = SwaggerUIBundle({&quot;);</span>
+<span class="nc" id="L176">        out.println(&quot;                url: '/api-docs',&quot;);</span>
+<span class="nc" id="L177">        out.println(&quot;                dom_id: '#swagger-ui',&quot;);</span>
+<span class="nc" id="L178">        out.println(&quot;                deepLinking: true,&quot;);</span>
+<span class="nc" id="L179">        out.println(&quot;                presets: [&quot;);</span>
+<span class="nc" id="L180">        out.println(&quot;                    SwaggerUIBundle.presets.apis,&quot;);</span>
+<span class="nc" id="L181">        out.println(&quot;                    SwaggerUIStandalonePreset&quot;);</span>
+<span class="nc" id="L182">        out.println(&quot;                ],&quot;);</span>
+<span class="nc" id="L183">        out.println(&quot;                plugins: [&quot;);</span>
+<span class="nc" id="L184">        out.println(&quot;                    SwaggerUIBundle.plugins.DownloadUrl&quot;);</span>
+<span class="nc" id="L185">        out.println(&quot;                ],&quot;);</span>
+<span class="nc" id="L186">        out.println(&quot;                layout: \&quot;StandaloneLayout\&quot;&quot;);</span>
+<span class="nc" id="L187">        out.println(&quot;            });&quot;);</span>
+<span class="nc" id="L188">        out.println(&quot;            window.ui = ui;&quot;);</span>
+<span class="nc" id="L189">        out.println(&quot;        };&quot;);</span>
+<span class="nc" id="L190">        out.println();</span>
+<span class="nc" id="L191">        out.println(&quot;        function openInNewWindow() {&quot;);</span>
+<span class="nc" id="L192">        out.println(&quot;            const url = window.location.protocol + '//' + window.location.host + '/swagger-ui/';&quot;);</span>
+<span class="nc" id="L193">        out.println(&quot;            const message = 'To switch users, please:\\n\\n' +&quot;);</span>
+<span class="nc" id="L194">        out.println(&quot;                '1. Open a new Incognito/Private window:\\n' +&quot;);</span>
+<span class="nc" id="L195">        out.println(&quot;                '   • Chrome: Ctrl+Shift+N (Windows) or Cmd+Shift+N (Mac)\\n' +&quot;);</span>
+<span class="nc" id="L196">        out.println(&quot;                '   • Firefox: Ctrl+Shift+P (Windows) or Cmd+Shift+P (Mac)\\n' +&quot;);</span>
+<span class="nc" id="L197">        out.println(&quot;                '   • Edge: Ctrl+Shift+N (Windows) or Cmd+Shift+N (Mac)\\n\\n' +&quot;);</span>
+<span class="nc" id="L198">        out.println(&quot;                '2. Navigate to: ' + url + '\\n\\n' +&quot;);</span>
+<span class="nc" id="L199">        out.println(&quot;                '3. Login with different credentials\\n\\n' +&quot;);</span>
+<span class="nc" id="L200">        out.println(&quot;                'Click OK to copy the URL to clipboard.';&quot;);</span>
+<span class="nc" id="L201">        out.println(&quot;            &quot;);</span>
+<span class="nc" id="L202">        out.println(&quot;            if (confirm(message)) {&quot;);</span>
+<span class="nc" id="L203">        out.println(&quot;                // Copy URL to clipboard&quot;);</span>
+<span class="nc" id="L204">        out.println(&quot;                navigator.clipboard.writeText(url).then(function() {&quot;);</span>
+<span class="nc" id="L205">        out.println(&quot;                    alert('URL copied to clipboard!\\n\\nNow open an Incognito window and paste the URL.');&quot;);</span>
+<span class="nc" id="L206">        out.println(&quot;                }).catch(function(err) {&quot;);</span>
+<span class="nc" id="L207">        out.println(&quot;                    alert('Could not copy URL. Please manually copy:\\n\\n' + url);&quot;);</span>
+<span class="nc" id="L208">        out.println(&quot;                });&quot;);</span>
+<span class="nc" id="L209">        out.println(&quot;            }&quot;);</span>
+<span class="nc" id="L210">        out.println(&quot;        }&quot;);</span>
+<span class="nc" id="L211">        out.println(&quot;    &lt;/script&gt;&quot;);</span>
+<span class="nc" id="L212">        out.println(&quot;&lt;/body&gt;&quot;);</span>
+<span class="nc" id="L213">        out.println(&quot;&lt;/html&gt;&quot;);</span>
+<span class="nc" id="L214">    }</span>
+
+    /**
+     * Serves the raw OpenAPI specification in YAML format for Swagger UI consumption.
+     */
+    private void serveRawOpenAPISpec(HttpServletResponse response) throws IOException {
+<span class="nc" id="L220">        try (InputStream is = getClass().getClassLoader().getResourceAsStream(&quot;api/openapi.yaml&quot;)) {</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">            if (is == null) {</span>
+<span class="nc" id="L222">                response.setStatus(HttpServletResponse.SC_NOT_FOUND);</span>
+<span class="nc" id="L223">                response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L224">                response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;OpenAPI specification not found\&quot;}&quot;);</span>
+<span class="nc" id="L225">                return;</span>
+            }
+
+            // Serve as YAML (Swagger UI can consume YAML directly)
+<span class="nc" id="L229">            response.setContentType(&quot;application/x-yaml; charset=UTF-8&quot;);</span>
+<span class="nc" id="L230">            response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+
+            // Copy YAML content to response
+<span class="nc" id="L233">            byte[] buffer = new byte[8192];</span>
+            int bytesRead;
+<span class="nc bnc" id="L235" title="All 2 branches missed.">            while ((bytesRead = is.read(buffer)) != -1) {</span>
+<span class="nc" id="L236">                response.getOutputStream().write(buffer, 0, bytesRead);</span>
+            }
+<span class="nc" id="L238">        } catch (Exception e) {</span>
+<span class="nc" id="L239">            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);</span>
+<span class="nc" id="L240">            response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L241">            response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;Failed to load OpenAPI specification: &quot; + e.getMessage() + &quot;\&quot;}&quot;);</span>
+        }
+<span class="nc" id="L243">    }</span>
+
+    /**
+     * Serves the OpenAPI specification from openapi.yaml file.
+     * Parses and displays all available API endpoints with their methods, descriptions, and parameters.
+     */
+    private void serveOpenAPISpec(HttpServletResponse response) throws IOException {
+        // Try to load and serve the openapi.yaml file
+<span class="nc" id="L251">        try (InputStream is = getClass().getClassLoader().getResourceAsStream(&quot;api/openapi.yaml&quot;)) {</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">            if (is == null) {</span>
+<span class="nc" id="L253">                response.setStatus(HttpServletResponse.SC_NOT_FOUND);</span>
+<span class="nc" id="L254">                response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L255">                response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;OpenAPI specification not found\&quot;}&quot;);</span>
+<span class="nc" id="L256">                return;</span>
+            }
+
+            // Read the YAML content
+<span class="nc" id="L260">            String yamlContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);</span>
+
+            // Parse and extract endpoints information
+<span class="nc" id="L263">            response.setContentType(&quot;text/html; charset=UTF-8&quot;);</span>
+<span class="nc" id="L264">            PrintWriter out = response.getWriter();</span>
+
+<span class="nc" id="L266">            out.println(&quot;&lt;!DOCTYPE html&gt;&quot;);</span>
+<span class="nc" id="L267">            out.println(&quot;&lt;html lang='en'&gt;&quot;);</span>
+<span class="nc" id="L268">            out.println(&quot;&lt;head&gt;&quot;);</span>
+<span class="nc" id="L269">            out.println(&quot;    &lt;meta charset='UTF-8'&gt;&quot;);</span>
+<span class="nc" id="L270">            out.println(&quot;    &lt;meta name='viewport' content='width=device-width, initial-scale=1.0'&gt;&quot;);</span>
+<span class="nc" id="L271">            out.println(&quot;    &lt;title&gt;Smart Store API - Endpoints&lt;/title&gt;&quot;);</span>
+<span class="nc" id="L272">            out.println(&quot;    &lt;style&gt;&quot;);</span>
+<span class="nc" id="L273">            out.println(&quot;        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f7fa; }&quot;);</span>
+<span class="nc" id="L274">            out.println(&quot;        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }&quot;);</span>
+<span class="nc" id="L275">            out.println(&quot;        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }&quot;);</span>
+<span class="nc" id="L276">            out.println(&quot;        h2 { color: #34495e; margin-top: 30px; }&quot;);</span>
+<span class="nc" id="L277">            out.println(&quot;        .endpoint { margin: 15px 0; padding: 15px; background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; }&quot;);</span>
+<span class="nc" id="L278">            out.println(&quot;        .method { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 10px; }&quot;);</span>
+<span class="nc" id="L279">            out.println(&quot;        .get { background: #61affe; color: white; }&quot;);</span>
+<span class="nc" id="L280">            out.println(&quot;        .post { background: #49cc90; color: white; }&quot;);</span>
+<span class="nc" id="L281">            out.println(&quot;        .put { background: #fca130; color: white; }&quot;);</span>
+<span class="nc" id="L282">            out.println(&quot;        .delete { background: #f93e3e; color: white; }&quot;);</span>
+<span class="nc" id="L283">            out.println(&quot;        .path { font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; font-weight: bold; }&quot;);</span>
+<span class="nc" id="L284">            out.println(&quot;        .description { margin-top: 8px; color: #7f8c8d; font-size: 14px; }&quot;);</span>
+<span class="nc" id="L285">            out.println(&quot;        .summary { margin-top: 5px; color: #34495e; font-weight: 500; }&quot;);</span>
+<span class="nc" id="L286">            out.println(&quot;        .tag-section { margin-bottom: 30px; }&quot;);</span>
+<span class="nc" id="L287">            out.println(&quot;        .tag-header { background: #3498db; color: white; padding: 10px 15px; border-radius: 4px; margin-top: 20px; }&quot;);</span>
+<span class="nc" id="L288">            out.println(&quot;        .info-box { background: #e8f4f8; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #3498db; }&quot;);</span>
+<span class="nc" id="L289">            out.println(&quot;        .button { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px; }&quot;);</span>
+<span class="nc" id="L290">            out.println(&quot;        .button:hover { background: #2980b9; }&quot;);</span>
+<span class="nc" id="L291">            out.println(&quot;        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }&quot;);</span>
+<span class="nc" id="L292">            out.println(&quot;    &lt;/style&gt;&quot;);</span>
+<span class="nc" id="L293">            out.println(&quot;&lt;/head&gt;&quot;);</span>
+<span class="nc" id="L294">            out.println(&quot;&lt;body&gt;&quot;);</span>
+<span class="nc" id="L295">            out.println(&quot;    &lt;div class='container'&gt;&quot;);</span>
+<span class="nc" id="L296">            out.println(&quot;        &lt;h1&gt;Smart Store API - Endpoints&lt;/h1&gt;&quot;);</span>
+
+            // Parse API info
+<span class="nc" id="L299">            String title = extractValue(yamlContent, &quot;title:&quot;);</span>
+<span class="nc" id="L300">            String version = extractValue(yamlContent, &quot;version:&quot;);</span>
+<span class="nc" id="L301">            String description = extractMultilineValue(yamlContent, &quot;description:&quot;);</span>
+
+<span class="nc" id="L303">            out.println(&quot;        &lt;div class='info-box'&gt;&quot;);</span>
+<span class="nc" id="L304">            out.println(&quot;            &lt;h3&gt;&quot; + title + &quot;&lt;/h3&gt;&quot;);</span>
+<span class="nc" id="L305">            out.println(&quot;            &lt;p&gt;&lt;strong&gt;Version:&lt;/strong&gt; &quot; + version + &quot;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L306">            out.println(&quot;            &lt;p&gt;&lt;strong&gt;Base URL:&lt;/strong&gt; &lt;code&gt;http://localhost:8080/api/v1&lt;/code&gt;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L307">            out.println(&quot;        &lt;/div&gt;&quot;);</span>
+
+<span class="nc" id="L309">            out.println(&quot;        &lt;a href='/swagger-ui/' class='button'&gt;View Interactive API Documentation (Swagger UI)&lt;/a&gt;&quot;);</span>
+
+<span class="nc" id="L311">            out.println(&quot;        &lt;h2&gt;Available Endpoints&lt;/h2&gt;&quot;);</span>
+
+            // Parse and display endpoints by extracting from YAML
+<span class="nc" id="L314">            displayEndpointsFromYaml(out, yamlContent);</span>
+
+<span class="nc" id="L316">            out.println(&quot;    &lt;/div&gt;&quot;);</span>
+<span class="nc" id="L317">            out.println(&quot;&lt;/body&gt;&quot;);</span>
+<span class="nc" id="L318">            out.println(&quot;&lt;/html&gt;&quot;);</span>
+
+<span class="nc" id="L320">        } catch (Exception e) {</span>
+<span class="nc" id="L321">            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);</span>
+<span class="nc" id="L322">            response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L323">            response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;Failed to parse OpenAPI specification: &quot; + e.getMessage() + &quot;\&quot;}&quot;);</span>
+        }
+<span class="nc" id="L325">    }</span>
+
+    /**
+     * Extract a simple value from YAML content
+     */
+    private String extractValue(String yaml, String key) {
+<span class="nc" id="L331">        int keyIndex = yaml.indexOf(key);</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        if (keyIndex == -1) return &quot;&quot;;</span>
+
+<span class="nc" id="L334">        int lineStart = keyIndex + key.length();</span>
+<span class="nc" id="L335">        int lineEnd = yaml.indexOf('\n', lineStart);</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">        if (lineEnd == -1) lineEnd = yaml.length();</span>
+
+<span class="nc" id="L338">        return yaml.substring(lineStart, lineEnd).trim();</span>
+    }
+
+    /**
+     * Extract multiline value from YAML (for description fields with |)
+     */
+    private String extractMultilineValue(String yaml, String key) {
+<span class="nc" id="L345">        int keyIndex = yaml.indexOf(key);</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">        if (keyIndex == -1) return &quot;&quot;;</span>
+
+        // Skip the | character if present
+<span class="nc" id="L349">        int lineStart = keyIndex + key.length();</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">        if (yaml.charAt(lineStart) == '|') {</span>
+<span class="nc" id="L351">            lineStart++;</span>
+        }
+
+        // Get first line only for simplicity
+<span class="nc" id="L355">        int lineEnd = yaml.indexOf('\n', lineStart);</span>
+<span class="nc bnc" id="L356" title="All 2 branches missed.">        if (lineEnd == -1) lineEnd = yaml.length();</span>
+
+<span class="nc" id="L358">        return yaml.substring(lineStart, lineEnd).trim();</span>
+    }
+
+    /**
+     * Parse and display endpoints from YAML content
+     */
+    private void displayEndpointsFromYaml(PrintWriter out, String yaml) {
+        // Find the paths section
+<span class="nc" id="L366">        int pathsIndex = yaml.indexOf(&quot;paths:&quot;);</span>
+<span class="nc bnc" id="L367" title="All 2 branches missed.">        if (pathsIndex == -1) {</span>
+<span class="nc" id="L368">            out.println(&quot;&lt;p&gt;No paths found in OpenAPI specification&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L369">            return;</span>
+        }
+
+        // Extract paths section (from &quot;paths:&quot; to the next major section &quot;components:&quot;)
+<span class="nc" id="L373">        int componentsIndex = yaml.indexOf(&quot;components:&quot;, pathsIndex);</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">        if (componentsIndex == -1) componentsIndex = yaml.length();</span>
+
+<span class="nc" id="L376">        String pathsSection = yaml.substring(pathsIndex, componentsIndex);</span>
+
+        // Parse each path (lines starting with &quot;  /&quot; at the beginning)
+<span class="nc" id="L379">        String[] lines = pathsSection.split(&quot;\n&quot;);</span>
+<span class="nc" id="L380">        String currentPath = null;</span>
+<span class="nc" id="L381">        String currentMethod = null;</span>
+<span class="nc" id="L382">        String currentSummary = null;</span>
+<span class="nc" id="L383">        String currentDescription = null;</span>
+<span class="nc" id="L384">        String currentTag = null;</span>
+
+<span class="nc bnc" id="L386" title="All 2 branches missed.">        for (String line : lines) {</span>
+            // Check if this is a path definition (starts with &quot;  /&quot;)
+<span class="nc bnc" id="L388" title="All 2 branches missed.">            if (line.matches(&quot;^  /[^:]*:$&quot;)) {</span>
+                // New path found
+<span class="nc" id="L390">                currentPath = line.trim().replace(&quot;:&quot;, &quot;&quot;);</span>
+<span class="nc" id="L391">            }</span>
+            // Check if this is an HTTP method
+<span class="nc bnc" id="L393" title="All 4 branches missed.">            else if (currentPath != null &amp;&amp; line.matches(&quot;^    (get|post|put|delete|patch):$&quot;)) {</span>
+                // Save previous endpoint if exists
+<span class="nc bnc" id="L395" title="All 2 branches missed.">                if (currentMethod != null) {</span>
+<span class="nc" id="L396">                    printEndpoint(out, currentPath, currentMethod, currentSummary, currentDescription, currentTag);</span>
+                }
+
+<span class="nc" id="L399">                currentMethod = line.trim().replace(&quot;:&quot;, &quot;&quot;);</span>
+<span class="nc" id="L400">                currentSummary = null;</span>
+<span class="nc" id="L401">                currentDescription = null;</span>
+<span class="nc" id="L402">                currentTag = null;</span>
+<span class="nc" id="L403">            }</span>
+            // Extract tags
+<span class="nc bnc" id="L405" title="All 4 branches missed.">            else if (line.contains(&quot;tags:&quot;) &amp;&amp; line.contains(&quot;[&quot;)) {</span>
+<span class="nc" id="L406">                int start = line.indexOf(&quot;[&quot;);</span>
+<span class="nc" id="L407">                int end = line.indexOf(&quot;]&quot;);</span>
+<span class="nc bnc" id="L408" title="All 4 branches missed.">                if (start != -1 &amp;&amp; end != -1) {</span>
+<span class="nc" id="L409">                    currentTag = line.substring(start + 1, end).trim().replace(&quot;\&quot;&quot;, &quot;&quot;).replace(&quot;'&quot;, &quot;&quot;);</span>
+                }
+<span class="nc" id="L411">            }</span>
+            // Extract summary
+<span class="nc bnc" id="L413" title="All 2 branches missed.">            else if (line.contains(&quot;summary:&quot;)) {</span>
+<span class="nc" id="L414">                currentSummary = extractValue(line, &quot;summary:&quot;);</span>
+<span class="nc" id="L415">            }</span>
+            // Extract description
+<span class="nc bnc" id="L417" title="All 2 branches missed.">            else if (line.contains(&quot;description:&quot;)) {</span>
+<span class="nc" id="L418">                currentDescription = extractValue(line, &quot;description:&quot;);</span>
+            }
+        }
+
+        // Print last endpoint
+<span class="nc bnc" id="L423" title="All 4 branches missed.">        if (currentMethod != null &amp;&amp; currentPath != null) {</span>
+<span class="nc" id="L424">            printEndpoint(out, currentPath, currentMethod, currentSummary, currentDescription, currentTag);</span>
+        }
+<span class="nc" id="L426">    }</span>
+
+    /**
+     * Print a single endpoint in HTML format
+     */
+    private void printEndpoint(PrintWriter out, String path, String method, String summary, String description, String tag) {
+<span class="nc" id="L432">        out.println(&quot;        &lt;div class='endpoint'&gt;&quot;);</span>
+<span class="nc" id="L433">        out.println(&quot;            &lt;div&gt;&quot;);</span>
+<span class="nc" id="L434">        out.println(&quot;                &lt;span class='method &quot; + method.toLowerCase() + &quot;'&gt;&quot; + method.toUpperCase() + &quot;&lt;/span&gt;&quot;);</span>
+<span class="nc" id="L435">        out.println(&quot;                &lt;span class='path'&gt;/api/v1&quot; + path + &quot;&lt;/span&gt;&quot;);</span>
+<span class="nc bnc" id="L436" title="All 4 branches missed.">        if (tag != null &amp;&amp; !tag.isEmpty()) {</span>
+<span class="nc" id="L437">            out.println(&quot;                &lt;span style='float: right; color: #95a5a6; font-size: 12px;'&gt;[&quot; + tag + &quot;]&lt;/span&gt;&quot;);</span>
+        }
+<span class="nc" id="L439">        out.println(&quot;            &lt;/div&gt;&quot;);</span>
+<span class="nc bnc" id="L440" title="All 4 branches missed.">        if (summary != null &amp;&amp; !summary.isEmpty()) {</span>
+<span class="nc" id="L441">            out.println(&quot;            &lt;div class='summary'&gt;&quot; + summary + &quot;&lt;/div&gt;&quot;);</span>
+        }
+<span class="nc bnc" id="L443" title="All 4 branches missed.">        if (description != null &amp;&amp; !description.isEmpty()) {</span>
+<span class="nc" id="L444">            out.println(&quot;            &lt;div class='description'&gt;&quot; + description + &quot;&lt;/div&gt;&quot;);</span>
+        }
+<span class="nc" id="L446">        out.println(&quot;        &lt;/div&gt;&quot;);</span>
+<span class="nc" id="L447">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

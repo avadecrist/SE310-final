@@ -1,4 +1,4 @@
-package com.se310.store.controller;
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoreController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.controller</a> &gt; <span class="el_source">StoreController.java</span></div><h1>StoreController.java</h1><pre class="source lang-java linenums">package com.se310.store.controller;
 
 import com.se310.store.dto.StoreMapper;
 import com.se310.store.dto.StoreMapper.StoreDTO;
@@ -32,9 +32,9 @@ public class StoreController extends BaseServlet {
 
     private final StoreService storeService;
 
-    public StoreController(StoreService storeService) {
-        this.storeService = storeService;
-    }
+<span class="nc" id="L35">    public StoreController(StoreService storeService) {</span>
+<span class="nc" id="L36">        this.storeService = storeService;</span>
+<span class="nc" id="L37">    }</span>
 
     /**
      * Handle GET requests - Returns StoreDTO objects
@@ -48,9 +48,9 @@ public class StoreController extends BaseServlet {
             
             if (storeId == null) {
                 // Get all stores
-                Collection<Store> stores = storeService.getAllStores();
-                Collection<StoreDTO> storeDTOs = stores.stream()
-                    .map(StoreMapper::toDTO)
+                Collection&lt;Store&gt; stores = storeService.getAllStores();
+                Collection&lt;StoreDTO&gt; storeDTOs = stores.stream()
+<span class="nc" id="L53">                    .map(StoreMapper::toDTO)</span>
                     .collect(Collectors.toList());
                 sendJsonResponse(response, storeDTOs);
             } else {
@@ -58,7 +58,7 @@ public class StoreController extends BaseServlet {
                 Store store = storeService.getStore(storeId);
                 if (store == null) {
                     sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
-                        "Store not found: " + storeId);
+                        &quot;Store not found: &quot; + storeId);
                     return;
                 }
                 StoreDTO storeDTO = StoreMapper.toDTO(store);
@@ -71,25 +71,25 @@ public class StoreController extends BaseServlet {
 
     /**
      * Handle POST requests - Create new store, returns StoreDTO
-     * POST /api/v1/stores?storeId=xxx&name=xxx&address=xxx
+     * POST /api/v1/stores?storeId=xxx&amp;name=xxx&amp;address=xxx
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             // Get parameters from request
-            String storeId = request.getParameter("storeId");
-            String name = request.getParameter("name");
-            String address = request.getParameter("address");
+            String storeId = request.getParameter(&quot;storeId&quot;);
+            String name = request.getParameter(&quot;name&quot;);
+            String address = request.getParameter(&quot;address&quot;);
             
             // Basic validation
             if (storeId == null || name == null || address == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
-                    "Missing required parameters: storeId, name, address");
+                    &quot;Missing required parameters: storeId, name, address&quot;);
                 return;
             }
             
             // Create store through service
-            Store store = storeService.createStore(storeId, name, address);
+<span class="nc" id="L92">            Store store = storeService.createStore(storeId, name, address);</span>
             StoreDTO storeDTO = StoreMapper.toDTO(store);
             sendJsonResponse(response, storeDTO, HttpServletResponse.SC_CREATED);
             
@@ -100,7 +100,7 @@ public class StoreController extends BaseServlet {
 
     /**
      * Handle PUT requests - Update existing store, returns StoreDTO
-     * PUT /api/v1/stores/{storeId}?description=xxx&address=xxx
+     * PUT /api/v1/stores/{storeId}?description=xxx&amp;address=xxx
      */
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -108,23 +108,23 @@ public class StoreController extends BaseServlet {
             String storeId = extractResourceId(request);
             if (storeId == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
-                    "Store ID is required in path");
+                    &quot;Store ID is required in path&quot;);
                 return;
             }
             
             // Get update parameters
-            String description = request.getParameter("description");
-            String address = request.getParameter("address");
+            String description = request.getParameter(&quot;description&quot;);
+            String address = request.getParameter(&quot;address&quot;);
             
             // Update store through service
             Store updatedStore = storeService.updateStore(storeId, description, address);
             if (updatedStore == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
-                    "Store not found: " + storeId);
+                    &quot;Store not found: &quot; + storeId);
                 return;
             }
             
-            StoreDTO storeDTO = StoreMapper.toDTO(updatedStore);
+<span class="nc" id="L127">            StoreDTO storeDTO = StoreMapper.toDTO(updatedStore);</span>
             sendJsonResponse(response, storeDTO);
             
         } catch (Exception e) {
@@ -142,15 +142,15 @@ public class StoreController extends BaseServlet {
             String storeId = extractResourceId(request);
             if (storeId == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
-                    "Store ID is required in path");
+                    &quot;Store ID is required in path&quot;);
                 return;
             }
             
             // Delete through service
-            boolean deleted = storeService.deleteStore(storeId);
+<span class="nc" id="L150">            boolean deleted = storeService.deleteStore(storeId);</span>
             if (!deleted) {
                 sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
-                    "Store not found: " + storeId);
+                    &quot;Store not found: &quot; + storeId);
                 return;
             }
             
@@ -162,3 +162,4 @@ public class StoreController extends BaseServlet {
         }
     }
 }
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

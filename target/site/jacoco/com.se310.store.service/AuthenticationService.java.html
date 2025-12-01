@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.service</a> &gt; <span class="el_source">AuthenticationService.java</span></div><h1>AuthenticationService.java</h1><pre class="source lang-java linenums">package com.se310.store.service;
+
+import com.se310.store.model.User;
+import com.se310.store.model.UserRole;
+import com.se310.store.repository.UserRepository;
+import com.se310.store.security.PasswordEncryption;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Optional;
+
+/**
+ * This class is responsible for authenticating users and managing user data.
+ * Handles password encryption/decryption for secure password storage.
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since 2025-09-25
+ **/
+public class AuthenticationService {
+
+    //TODO: Implement authentication service for User operations
+    //TODO: Implement authorizations service for Store operations
+    //TODO: Implement management of User related data in the persistent storage
+    //TODO: Implement Service Layer Pattern
+
+    private final UserRepository userRepository;
+
+<span class="nc" id="L30">    public AuthenticationService(UserRepository userRepository) {</span>
+<span class="nc" id="L31">        this.userRepository = userRepository;</span>
+<span class="nc" id="L32">    }</span>
+
+    /**
+     * Authenticates a user using HTTP Basic Authentication.
+     *
+     * @param authHeader The Authorization header value (e.g., &quot;Basic base64(email:password)&quot;)
+     * @return Optional containing the authenticated User, or empty if authentication fails
+     */
+    public Optional&lt;User&gt; authenticateBasic(String authHeader) {
+<span class="nc bnc" id="L41" title="All 4 branches missed.">        if (authHeader == null || !authHeader.startsWith(&quot;Basic &quot;)) {</span>
+<span class="nc" id="L42">            return Optional.empty();</span>
+        }
+
+        try {
+            //TODO: Implement User Authentication logic
+<span class="nc" id="L47">            String base64Credentials = authHeader.substring(&quot;Basic &quot;.length()).trim();</span>
+<span class="nc" id="L48">            byte[] decodedBytes = Base64.getDecoder().decode(base64Credentials);</span>
+<span class="nc" id="L49">            String credentials = new String(decodedBytes, StandardCharsets.UTF_8);</span>
+
+            // Split credentials into email and password
+<span class="nc" id="L52">            String[] parts = credentials.split(&quot;:&quot;, 2);</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">            if (parts.length != 2) {</span>
+<span class="nc" id="L54">                return Optional.empty();</span>
+            }
+
+            //TODO: Implement User Repository retrieval logic
+<span class="nc" id="L58">            User dummyUser = new User(</span>
+                &quot;dummy@store.com&quot;,
+                &quot;dummyPassword123&quot;,
+                &quot;Dummy User&quot;,
+                UserRole.ADMIN  // Hardcoded as ADMIN for full access
+            );
+
+<span class="nc" id="L65">            return Optional.of(dummyUser);</span>
+
+<span class="nc" id="L67">        } catch (Exception e) {</span>
+            // Invalid format or decoding error
+<span class="nc" id="L69">            return Optional.empty();</span>
+        }
+    }
+
+    /**
+     * Register a new user with a specific role.
+     * Password is encrypted before storage for security.
+     *
+     * @param email User's email address
+     * @param password User's password (plain text, will be encrypted)
+     * @param name User's display name
+     * @param role User's role (ADMIN, MANAGER, or USER)
+     * @return The created User object
+     */
+    public User registerUser(String email, String password, String name, UserRole role) {
+<span class="nc" id="L84">        return null;</span>
+    }
+
+    /**
+     * Register a new user with default USER role
+     *
+     * @param email User's email address
+     * @param password User's password
+     * @param name User's display name
+     * @return The created User object
+     */
+    public User registerUser(String email, String password, String name) {
+<span class="nc" id="L96">        return null;</span>
+    }
+
+    /**
+     * Check if user exists
+     */
+    public boolean userExists(String email) {
+<span class="nc" id="L103">        return false;</span>
+    }
+
+    /**
+     * Get all users
+     */
+    public Collection&lt;User&gt; getAllUsers() {
+<span class="nc" id="L110">        return null;</span>
+    }
+
+    /**
+     * Get user by email
+     */
+    public User getUserByEmail(String email) {
+<span class="nc" id="L117">        return null;</span>
+    }
+
+    /**
+     * Update user information.
+     * Password is encrypted before storage if provided.
+     *
+     * @param email User's email address
+     * @param password New password (plain text, will be encrypted), or null to keep current
+     * @param name New name, or null to keep current
+     * @return The updated User object, or null if user not found
+     */
+    public User updateUser(String email, String password, String name) {
+<span class="nc" id="L130">        return null;</span>
+    }
+
+    /**
+     * Delete user by email
+     */
+    public boolean deleteUser(String email) {
+<span class="nc" id="L137">        return false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

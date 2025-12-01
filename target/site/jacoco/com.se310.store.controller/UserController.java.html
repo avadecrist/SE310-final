@@ -1,4 +1,4 @@
-package com.se310.store.controller;
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.controller</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">package com.se310.store.controller;
 
 import com.se310.store.dto.UserMapper;
 import com.se310.store.dto.UserMapper.UserDTO;
@@ -31,9 +31,9 @@ public class UserController extends BaseServlet {
 
     private final AuthenticationService authenticationService;
 
-    public UserController(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
-    }
+<span class="nc" id="L34">    public UserController(AuthenticationService authenticationService) {</span>
+<span class="nc" id="L35">        this.authenticationService = authenticationService;</span>
+<span class="nc" id="L36">    }</span>
 
     /**
      * Handle GET requests - Returns UserDTO objects (without passwords)
@@ -47,9 +47,9 @@ public class UserController extends BaseServlet {
             
             if (email == null) {
                 // Get all users
-                Collection<User> users = authenticationService.getAllUsers();
-                Collection<UserDTO> userDTOs = users.stream()
-                    .map(UserMapper::toDTO)
+                Collection&lt;User&gt; users = authenticationService.getAllUsers();
+                Collection&lt;UserDTO&gt; userDTOs = users.stream()
+<span class="nc" id="L52">                    .map(UserMapper::toDTO)</span>
                     .collect(Collectors.toList());
                 sendJsonResponse(response, userDTOs);
             } else {
@@ -57,7 +57,7 @@ public class UserController extends BaseServlet {
                 User user = authenticationService.getUser(email);
                 if (user == null) {
                     sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
-                        "User not found: " + email);
+                        &quot;User not found: &quot; + email);
                     return;
                 }
                 UserDTO userDTO = UserMapper.toDTO(user);
@@ -70,26 +70,26 @@ public class UserController extends BaseServlet {
 
     /**
      * Handle POST requests - Register new user, returns UserDTO (without password)
-     * POST /api/v1/users?email=xxx&password=xxx&name=xxx&role=xxx
+     * POST /api/v1/users?email=xxx&amp;password=xxx&amp;name=xxx&amp;role=xxx
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             // Get parameters from request
-            String email = request.getParameter("email");
-            String password = request.getParameter("password");
-            String name = request.getParameter("name");
-            String role = request.getParameter("role");
+            String email = request.getParameter(&quot;email&quot;);
+            String password = request.getParameter(&quot;password&quot;);
+            String name = request.getParameter(&quot;name&quot;);
+            String role = request.getParameter(&quot;role&quot;);
             
             // Basic validation
             if (email == null || password == null || name == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
-                    "Missing required parameters: email, password, name");
+                    &quot;Missing required parameters: email, password, name&quot;);
                 return;
             }
             
             // Create user through authentication service
-            User user = authenticationService.registerUser(email, password, name, role);
+<span class="nc" id="L92">            User user = authenticationService.registerUser(email, password, name, role);</span>
             UserDTO userDTO = UserMapper.toDTO(user);
             sendJsonResponse(response, userDTO, HttpServletResponse.SC_CREATED);
             
@@ -100,7 +100,7 @@ public class UserController extends BaseServlet {
 
     /**
      * Handle PUT requests - Update user information, returns UserDTO (without password)
-     * PUT /api/v1/users/{email}?password=xxx&name=xxx
+     * PUT /api/v1/users/{email}?password=xxx&amp;name=xxx
      */
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -108,23 +108,23 @@ public class UserController extends BaseServlet {
             String email = extractResourceId(request);
             if (email == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
-                    "Email is required in path");
+                    &quot;Email is required in path&quot;);
                 return;
             }
             
             // Get update parameters
-            String password = request.getParameter("password");
-            String name = request.getParameter("name");
+            String password = request.getParameter(&quot;password&quot;);
+            String name = request.getParameter(&quot;name&quot;);
             
             // Update user through authentication service
             User updatedUser = authenticationService.updateUser(email, password, name);
             if (updatedUser == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
-                    "User not found: " + email);
+                    &quot;User not found: &quot; + email);
                 return;
             }
             
-            UserDTO userDTO = UserMapper.toDTO(updatedUser);
+<span class="nc" id="L127">            UserDTO userDTO = UserMapper.toDTO(updatedUser);</span>
             sendJsonResponse(response, userDTO);
             
         } catch (Exception e) {
@@ -139,26 +139,27 @@ public class UserController extends BaseServlet {
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
-            String email = extractResourceId(request);
-            if (email == null) {
-                sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
-                    "Email is required in path");
-                return;
+<span class="nc" id="L142">            String email = extractResourceId(request);</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            if (email == null) {</span>
+<span class="nc" id="L144">                sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, </span>
+<span class="nc" id="L145">                    &quot;Email is required in path&quot;);</span>
+<span class="nc" id="L146">                return;</span>
             }
             
             // Delete through authentication service
-            boolean deleted = authenticationService.deleteUser(email);
-            if (!deleted) {
-                sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
-                    "User not found: " + email);
-                return;
+<span class="nc" id="L150">            boolean deleted = authenticationService.deleteUser(email);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            if (!deleted) {</span>
+<span class="nc" id="L152">                sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, </span>
+<span class="nc" id="L153">                    &quot;User not found: &quot; + email);</span>
+<span class="nc" id="L154">                return;</span>
             }
             
             // Send success response with no content
-            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+<span class="nc" id="L158">            response.setStatus(HttpServletResponse.SC_NO_CONTENT);</span>
             
-        } catch (Exception e) {
-            handleException(response, e);
+<span class="nc" id="L160">        } catch (Exception e) {</span>
+<span class="nc" id="L161">            handleException(response, e);</span>
         }
-    }
+<span class="nc" id="L163">    }</span>
 }
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

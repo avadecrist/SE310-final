@@ -1,0 +1,771 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DataManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.data</a> &gt; <span class="el_source">DataManager.java</span></div><h1>DataManager.java</h1><pre class="source lang-java linenums">package com.se310.store.data;
+
+import com.se310.store.config.ConfigLoader;
+import com.se310.store.model.Store;
+import com.se310.store.model.User;
+import com.se310.store.model.UserRole;
+import com.se310.store.security.PasswordEncryption;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * DataManager - Singleton class for managing H2 database connections.
+ * Provides centralized database management for the application.
+ *
+ * This implementation uses H2 embedded database for persistent data storage.
+ * The database file is stored in the user's home directory under .smartstore/
+ *
+ * All database-specific logic (SQLException handling, ResultSet mapping) is encapsulated here.
+ * Repositories are database-agnostic and work only with domain objects.
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-11
+ */
+public class DataManager {
+
+    //TODO: Implement Singleton pattern with double-checked locking
+
+    private static volatile DataManager instance;
+    private Connection connection;
+
+    // H2 database configuration - loaded from application.properties
+<span class="nc" id="L36">    private static final String DB_DRIVER = ConfigLoader.getDbDriver();</span>
+<span class="nc" id="L37">    private static final String DB_URL = ConfigLoader.getDbUrl();</span>
+<span class="nc" id="L38">    private static final String DB_USER = ConfigLoader.getDbUser();</span>
+<span class="nc" id="L39">    private static final String DB_PASSWORD = ConfigLoader.getDbPassword();</span>
+
+    // Private constructor to prevent instantiation
+<span class="nc" id="L42">    private DataManager() {</span>
+<span class="nc" id="L43">        initializeDatabase();</span>
+<span class="nc" id="L44">    }</span>
+
+    //TODO: Thread-safe singleton implementation with double-checked locking
+    public static DataManager getInstance() { 
+<span class="nc" id="L48">        DataManager result = instance;</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (result == null) {</span>
+<span class="nc" id="L50">            synchronized (DataManager.class) {</span>
+<span class="nc" id="L51">                result = instance;</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">                if (result == null) {</span>
+<span class="nc" id="L53">                    result = new DataManager();</span>
+<span class="nc" id="L54">                    instance = result;</span>
+                }
+<span class="nc" id="L56">            }</span>
+        }
+<span class="nc" id="L58">        return result;</span>
+    }
+
+    /**
+     * Initialize H2 database connection and create tables if they don't exist
+     */
+    private void initializeDatabase() {
+        try {
+            // Load H2 driver
+<span class="nc" id="L67">            Class.forName(DB_DRIVER);</span>
+
+            // Establish connection
+<span class="nc" id="L70">            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);</span>
+
+            // Create tables
+<span class="nc" id="L73">            createTables();</span>
+
+<span class="nc" id="L75">            System.out.println(&quot;DataManager: H2 Database initialized successfully&quot;);</span>
+<span class="nc" id="L76">        } catch (ClassNotFoundException e) {</span>
+<span class="nc" id="L77">            throw new RuntimeException(&quot;H2 Driver not found&quot;, e);</span>
+<span class="nc" id="L78">        } catch (SQLException e) {</span>
+<span class="nc" id="L79">            throw new RuntimeException(&quot;Failed to initialize H2 database&quot;, e);</span>
+<span class="nc" id="L80">        }</span>
+<span class="nc" id="L81">    }</span>
+
+    /**
+     * Create database tables if they don't exist
+     */
+    private void createTables() throws SQLException {
+<span class="nc" id="L87">        try (Statement stmt = connection.createStatement()) {</span>
+            // Users table
+<span class="nc" id="L89">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS users (&quot; +</span>
+                &quot;email VARCHAR(255) PRIMARY KEY,&quot; +
+                &quot;password VARCHAR(255) NOT NULL,&quot; +
+                &quot;name VARCHAR(255) NOT NULL,&quot; +
+                &quot;role VARCHAR(50) DEFAULT 'USER'&quot; +
+                &quot;)&quot;);
+
+            // Stores table
+<span class="nc" id="L97">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS stores (&quot; +</span>
+                &quot;id VARCHAR(255) PRIMARY KEY,&quot; +
+                &quot;address VARCHAR(500),&quot; +
+                &quot;description VARCHAR(1000)&quot; +
+                &quot;)&quot;);
+
+            // Products table
+<span class="nc" id="L104">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS products (&quot; +</span>
+                &quot;id VARCHAR(255) PRIMARY KEY,&quot; +
+                &quot;name VARCHAR(255) NOT NULL,&quot; +
+                &quot;description VARCHAR(1000),&quot; +
+                &quot;size VARCHAR(100),&quot; +
+                &quot;category VARCHAR(100),&quot; +
+                &quot;price DOUBLE,&quot; +
+                &quot;temperature VARCHAR(50)&quot; +
+                &quot;)&quot;);
+
+            // Customers table
+<span class="nc" id="L115">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS customers (&quot; +</span>
+                &quot;id VARCHAR(255) PRIMARY KEY,&quot; +
+                &quot;first_name VARCHAR(255),&quot; +
+                &quot;last_name VARCHAR(255),&quot; +
+                &quot;customer_type VARCHAR(50),&quot; +
+                &quot;email VARCHAR(255),&quot; +
+                &quot;account_address VARCHAR(500),&quot; +
+                &quot;store_id VARCHAR(255),&quot; +
+                &quot;aisle_number VARCHAR(50),&quot; +
+                &quot;last_seen TIMESTAMP&quot; +
+                &quot;)&quot;);
+
+            // Baskets table
+<span class="nc" id="L128">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS baskets (&quot; +</span>
+                &quot;id VARCHAR(255) PRIMARY KEY,&quot; +
+                &quot;customer_id VARCHAR(255),&quot; +
+                &quot;store_id VARCHAR(255)&quot; +
+                &quot;)&quot;);
+
+            // Basket items table
+<span class="nc" id="L135">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS basket_items (&quot; +</span>
+                &quot;basket_id VARCHAR(255),&quot; +
+                &quot;product_id VARCHAR(255),&quot; +
+                &quot;count INT,&quot; +
+                &quot;PRIMARY KEY (basket_id, product_id)&quot; +
+                &quot;)&quot;);
+
+            // Inventory table
+<span class="nc" id="L143">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS inventory (&quot; +</span>
+                &quot;id VARCHAR(255) PRIMARY KEY,&quot; +
+                &quot;store_id VARCHAR(255),&quot; +
+                &quot;aisle_number VARCHAR(50),&quot; +
+                &quot;shelf_id VARCHAR(50),&quot; +
+                &quot;capacity INT,&quot; +
+                &quot;count INT,&quot; +
+                &quot;product_id VARCHAR(255),&quot; +
+                &quot;inventory_type VARCHAR(50)&quot; +
+                &quot;)&quot;);
+
+            // Devices table
+<span class="nc" id="L155">            stmt.execute(&quot;CREATE TABLE IF NOT EXISTS devices (&quot; +</span>
+                &quot;id VARCHAR(255) PRIMARY KEY,&quot; +
+                &quot;name VARCHAR(255),&quot; +
+                &quot;device_type VARCHAR(100),&quot; +
+                &quot;store_id VARCHAR(255),&quot; +
+                &quot;aisle_number VARCHAR(50)&quot; +
+                &quot;)&quot;);
+
+            // Insert default users if not exists
+<span class="nc" id="L164">            insertDefaultUsers();</span>
+        }
+<span class="nc" id="L166">    }</span>
+
+    /**
+     * Insert default test users from application.properties.
+     * Passwords are encrypted before storage for security.
+     */
+    private void insertDefaultUsers() throws SQLException {
+<span class="nc" id="L173">        String checkSql = &quot;SELECT COUNT(*) FROM users WHERE email = ?&quot;;</span>
+<span class="nc" id="L174">        String insertSql = &quot;INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)&quot;;</span>
+
+        // Check and insert admin user - credentials loaded from properties, password encrypted
+<span class="nc" id="L177">        try (PreparedStatement checkStmt = getConnection().prepareStatement(checkSql)) {</span>
+<span class="nc" id="L178">            checkStmt.setString(1, ConfigLoader.getAdminEmail());</span>
+<span class="nc" id="L179">            ResultSet rs = checkStmt.executeQuery();</span>
+<span class="nc bnc" id="L180" title="All 4 branches missed.">            if (rs.next() &amp;&amp; rs.getInt(1) == 0) {</span>
+<span class="nc" id="L181">                try (PreparedStatement insertStmt = getConnection().prepareStatement(insertSql)) {</span>
+<span class="nc" id="L182">                    insertStmt.setString(1, ConfigLoader.getAdminEmail());</span>
+<span class="nc" id="L183">                    insertStmt.setString(2, PasswordEncryption.encrypt(ConfigLoader.getAdminPassword()));</span>
+<span class="nc" id="L184">                    insertStmt.setString(3, ConfigLoader.getAdminName());</span>
+<span class="nc" id="L185">                    insertStmt.setString(4, ConfigLoader.getAdminRole());</span>
+<span class="nc" id="L186">                    insertStmt.executeUpdate();</span>
+                }
+            }
+        }
+
+        // Check and insert regular user - credentials loaded from properties, password encrypted
+<span class="nc" id="L192">        try (PreparedStatement checkStmt = getConnection().prepareStatement(checkSql)) {</span>
+<span class="nc" id="L193">            checkStmt.setString(1, ConfigLoader.getUserEmail());</span>
+<span class="nc" id="L194">            ResultSet rs = checkStmt.executeQuery();</span>
+<span class="nc bnc" id="L195" title="All 4 branches missed.">            if (rs.next() &amp;&amp; rs.getInt(1) == 0) {</span>
+<span class="nc" id="L196">                try (PreparedStatement insertStmt = getConnection().prepareStatement(insertSql)) {</span>
+<span class="nc" id="L197">                    insertStmt.setString(1, ConfigLoader.getUserEmail());</span>
+<span class="nc" id="L198">                    insertStmt.setString(2, PasswordEncryption.encrypt(ConfigLoader.getUserPassword()));</span>
+<span class="nc" id="L199">                    insertStmt.setString(3, ConfigLoader.getUserName());</span>
+<span class="nc" id="L200">                    insertStmt.setString(4, ConfigLoader.getUserRole());</span>
+<span class="nc" id="L201">                    insertStmt.executeUpdate();</span>
+                }
+            }
+        }
+<span class="nc" id="L205">    }</span>
+
+    /**
+     * Get database connection
+     */
+    public Connection getConnection() {
+        try {
+            // Check if connection is still valid and test it
+<span class="nc bnc" id="L213" title="All 6 branches missed.">            if (connection == null || connection.isClosed() || !connection.isValid(1)) {</span>
+<span class="nc" id="L214">                connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);</span>
+            }
+<span class="nc" id="L216">            return connection;</span>
+<span class="nc" id="L217">        } catch (SQLException e) {</span>
+            // If we get an error, try to reconnect
+            try {
+<span class="nc" id="L220">                connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);</span>
+<span class="nc" id="L221">                return connection;</span>
+<span class="nc" id="L222">            } catch (SQLException ex) {</span>
+<span class="nc" id="L223">                throw new RuntimeException(&quot;Failed to get database connection&quot;, ex);</span>
+            }
+        }
+    }
+
+    /**
+     * Close database connection
+     */
+    public void close() {
+        try {
+<span class="nc bnc" id="L233" title="All 4 branches missed.">            if (connection != null &amp;&amp; !connection.isClosed()) {</span>
+<span class="nc" id="L234">                connection.close();</span>
+<span class="nc" id="L235">                System.out.println(&quot;DataManager: Database connection closed&quot;);</span>
+            }
+<span class="nc" id="L237">        } catch (SQLException e) {</span>
+<span class="nc" id="L238">            System.err.println(&quot;Error closing database connection: &quot; + e.getMessage());</span>
+<span class="nc" id="L239">        }</span>
+<span class="nc" id="L240">    }</span>
+
+    /**
+     * Execute a query and return ResultSet
+     */
+    public ResultSet executeQuery(String sql, Object... params) throws SQLException {
+<span class="nc" id="L246">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        for (int i = 0; i &lt; params.length; i++) {</span>
+<span class="nc" id="L248">            stmt.setObject(i + 1, params[i]);</span>
+        }
+<span class="nc" id="L250">        return stmt.executeQuery();</span>
+    }
+
+    /**
+     * Execute an update/insert/delete statement
+     */
+    public int executeUpdate(String sql, Object... params) throws SQLException {
+<span class="nc" id="L257">        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">            for (int i = 0; i &lt; params.length; i++) {</span>
+<span class="nc" id="L259">                stmt.setObject(i + 1, params[i]);</span>
+            }
+<span class="nc" id="L261">            return stmt.executeUpdate();</span>
+        }
+    }
+
+    /**
+     * Clear all data from all tables (for testing)
+     */
+    public void clearAllTables() throws SQLException {
+<span class="nc" id="L269">        try (Statement stmt = getConnection().createStatement()) {</span>
+            // Delete in order to respect foreign key constraints
+<span class="nc" id="L271">            stmt.execute(&quot;DELETE FROM basket_items&quot;);</span>
+<span class="nc" id="L272">            stmt.execute(&quot;DELETE FROM baskets&quot;);</span>
+<span class="nc" id="L273">            stmt.execute(&quot;DELETE FROM devices&quot;);</span>
+<span class="nc" id="L274">            stmt.execute(&quot;DELETE FROM inventory&quot;);</span>
+<span class="nc" id="L275">            stmt.execute(&quot;DELETE FROM customers&quot;);</span>
+<span class="nc" id="L276">            stmt.execute(&quot;DELETE FROM products&quot;);</span>
+<span class="nc" id="L277">            stmt.execute(&quot;DELETE FROM stores&quot;);</span>
+<span class="nc" id="L278">            stmt.execute(&quot;DELETE FROM users&quot;);</span>
+            // Re-insert default users
+<span class="nc" id="L280">            insertDefaultUsers();</span>
+        }
+<span class="nc" id="L282">    }</span>
+
+    // ==================== USER OPERATIONS ====================
+
+    /**
+     * Find user by email
+     */
+    public ResultSet findUserByEmail(String email) throws SQLException {
+<span class="nc" id="L290">        String sql = &quot;SELECT email, password, name, role FROM users WHERE email = ?&quot;;</span>
+<span class="nc" id="L291">        return executeQuery(sql, email);</span>
+    }
+
+    /**
+     * Save or update a user
+     */
+    public void saveUser(String email, String password, String name, String role) throws SQLException {
+        // Try update first
+<span class="nc" id="L299">        String updateSql = &quot;UPDATE users SET password = ?, name = ?, role = ? WHERE email = ?&quot;;</span>
+<span class="nc" id="L300">        int rowsAffected = executeUpdate(updateSql, password, name, role, email);</span>
+
+        // If no rows updated, insert new user
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        if (rowsAffected == 0) {</span>
+<span class="nc" id="L304">            String insertSql = &quot;INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)&quot;;</span>
+<span class="nc" id="L305">            executeUpdate(insertSql, email, password, name, role);</span>
+        }
+<span class="nc" id="L307">    }</span>
+
+    /**
+     * Check if user exists by email
+     */
+    public boolean userExists(String email) throws SQLException {
+<span class="nc" id="L313">        String sql = &quot;SELECT COUNT(*) FROM users WHERE email = ?&quot;;</span>
+<span class="nc" id="L314">        try (ResultSet rs = executeQuery(sql, email)) {</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">            if (rs.next()) {</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">                return rs.getInt(1) &gt; 0;</span>
+            }
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        }</span>
+<span class="nc" id="L319">        return false;</span>
+    }
+
+    /**
+     * Delete user by email
+     */
+    public boolean deleteUser(String email) throws SQLException {
+<span class="nc" id="L326">        String sql = &quot;DELETE FROM users WHERE email = ?&quot;;</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">        return executeUpdate(sql, email) &gt; 0;</span>
+    }
+
+    /**
+     * Get all users
+     */
+    public ResultSet findAllUsers() throws SQLException {
+<span class="nc" id="L334">        String sql = &quot;SELECT email, password, name, role FROM users&quot;;</span>
+<span class="nc" id="L335">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L336">        return stmt.executeQuery();</span>
+    }
+
+    // ==================== USER OPERATIONS (DOMAIN OBJECT BASED) ====================
+
+    /**
+     * Find user by email - Returns domain object
+     * All SQLException handling is done here
+     */
+    public Optional&lt;User&gt; getUserByEmail(String email) {
+<span class="nc" id="L346">        String sql = &quot;SELECT email, password, name, role FROM users WHERE email = ?&quot;;</span>
+<span class="nc" id="L347">        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {</span>
+<span class="nc" id="L348">            stmt.setString(1, email);</span>
+<span class="nc" id="L349">            try (ResultSet rs = stmt.executeQuery()) {</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">                if (rs.next()) {</span>
+<span class="nc" id="L351">                    return Optional.of(mapResultSetToUser(rs));</span>
+                }
+<span class="nc bnc" id="L353" title="All 2 branches missed.">            }</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L355">            System.err.println(&quot;Error finding user by email: &quot; + e.getMessage());</span>
+<span class="nc" id="L356">        }</span>
+<span class="nc" id="L357">        return Optional.empty();</span>
+    }
+
+    /**
+     * Get all users - Returns list of domain objects
+     */
+    public List&lt;User&gt; getAllUsers() {
+<span class="nc" id="L364">        List&lt;User&gt; users = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L365">        String sql = &quot;SELECT email, password, name, role FROM users&quot;;</span>
+<span class="nc" id="L366">        try (PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L367">             ResultSet rs = stmt.executeQuery()) {</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L369">                users.add(mapResultSetToUser(rs));</span>
+            }
+<span class="nc" id="L371">        } catch (SQLException e) {</span>
+<span class="nc" id="L372">            System.err.println(&quot;Error finding all users: &quot; + e.getMessage());</span>
+<span class="nc" id="L373">        }</span>
+<span class="nc" id="L374">        return users;</span>
+    }
+
+    /**
+     * Save user - Accepts domain object
+     */
+    public User persistUser(User user) {
+        try {
+<span class="nc" id="L382">            saveUser(user.getEmail(), user.getPassword(), user.getName(), user.getRole().name());</span>
+<span class="nc" id="L383">            return user;</span>
+<span class="nc" id="L384">        } catch (SQLException e) {</span>
+<span class="nc" id="L385">            System.err.println(&quot;Error saving user: &quot; + e.getMessage());</span>
+<span class="nc" id="L386">            throw new RuntimeException(&quot;Failed to save user&quot;, e);</span>
+        }
+    }
+
+    /**
+     * Delete user by email - Returns boolean
+     */
+    public boolean removeUser(String email) {
+        try {
+<span class="nc" id="L395">            return deleteUser(email);</span>
+<span class="nc" id="L396">        } catch (SQLException e) {</span>
+<span class="nc" id="L397">            System.err.println(&quot;Error deleting user: &quot; + e.getMessage());</span>
+<span class="nc" id="L398">            return false;</span>
+        }
+    }
+
+    /**
+     * Check if user exists - Handles SQLException internally
+     */
+    public boolean doesUserExist(String email) {
+        try {
+<span class="nc" id="L407">            return userExists(email);</span>
+<span class="nc" id="L408">        } catch (SQLException e) {</span>
+<span class="nc" id="L409">            System.err.println(&quot;Error checking if user exists: &quot; + e.getMessage());</span>
+<span class="nc" id="L410">            return false;</span>
+        }
+    }
+
+    /**
+     * Helper method to map ResultSet to User object
+     */
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+<span class="nc" id="L418">        return new User(</span>
+<span class="nc" id="L419">            rs.getString(&quot;email&quot;),</span>
+<span class="nc" id="L420">            rs.getString(&quot;password&quot;),</span>
+<span class="nc" id="L421">            rs.getString(&quot;name&quot;),</span>
+<span class="nc" id="L422">            UserRole.valueOf(rs.getString(&quot;role&quot;))</span>
+        );
+    }
+
+    // ==================== STORE OPERATIONS ====================
+
+    /**
+     * Find store by ID
+     */
+    public ResultSet findStoreById(String storeId) throws SQLException {
+<span class="nc" id="L432">        String sql = &quot;SELECT id, address, description FROM stores WHERE id = ?&quot;;</span>
+<span class="nc" id="L433">        return executeQuery(sql, storeId);</span>
+    }
+
+    /**
+     * Save or update a store
+     */
+    public void saveStore(String id, String address, String description) throws SQLException {
+        // Try update first
+<span class="nc" id="L441">        String updateSql = &quot;UPDATE stores SET address = ?, description = ? WHERE id = ?&quot;;</span>
+<span class="nc" id="L442">        int rowsAffected = executeUpdate(updateSql, address, description, id);</span>
+
+        // If no rows updated, insert new store
+<span class="nc bnc" id="L445" title="All 2 branches missed.">        if (rowsAffected == 0) {</span>
+<span class="nc" id="L446">            String insertSql = &quot;INSERT INTO stores (id, address, description) VALUES (?, ?, ?)&quot;;</span>
+<span class="nc" id="L447">            executeUpdate(insertSql, id, address, description);</span>
+        }
+<span class="nc" id="L449">    }</span>
+
+    /**
+     * Check if store exists by ID
+     */
+    public boolean storeExists(String storeId) throws SQLException {
+<span class="nc" id="L455">        String sql = &quot;SELECT COUNT(*) FROM stores WHERE id = ?&quot;;</span>
+<span class="nc" id="L456">        try (ResultSet rs = executeQuery(sql, storeId)) {</span>
+<span class="nc bnc" id="L457" title="All 2 branches missed.">            if (rs.next()) {</span>
+<span class="nc bnc" id="L458" title="All 2 branches missed.">                return rs.getInt(1) &gt; 0;</span>
+            }
+<span class="nc bnc" id="L460" title="All 2 branches missed.">        }</span>
+<span class="nc" id="L461">        return false;</span>
+    }
+
+    /**
+     * Delete store by ID
+     */
+    public boolean deleteStore(String storeId) throws SQLException {
+<span class="nc" id="L468">        String sql = &quot;DELETE FROM stores WHERE id = ?&quot;;</span>
+<span class="nc bnc" id="L469" title="All 2 branches missed.">        return executeUpdate(sql, storeId) &gt; 0;</span>
+    }
+
+    /**
+     * Get all stores
+     */
+    public ResultSet findAllStores() throws SQLException {
+<span class="nc" id="L476">        String sql = &quot;SELECT id, address, description FROM stores&quot;;</span>
+<span class="nc" id="L477">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L478">        return stmt.executeQuery();</span>
+    }
+
+    // ==================== STORE OPERATIONS (DOMAIN OBJECT BASED) ====================
+
+    /**
+     * Find store by ID - Returns domain object
+     * All SQLException handling is done here
+     */
+    public Optional&lt;Store&gt; getStoreById(String storeId) {
+<span class="nc" id="L488">        String sql = &quot;SELECT id, address, description FROM stores WHERE id = ?&quot;;</span>
+<span class="nc" id="L489">        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {</span>
+<span class="nc" id="L490">            stmt.setString(1, storeId);</span>
+<span class="nc" id="L491">            try (ResultSet rs = stmt.executeQuery()) {</span>
+<span class="nc bnc" id="L492" title="All 2 branches missed.">                if (rs.next()) {</span>
+<span class="nc" id="L493">                    return Optional.of(mapResultSetToStore(rs));</span>
+                }
+<span class="nc bnc" id="L495" title="All 2 branches missed.">            }</span>
+<span class="nc bnc" id="L496" title="All 2 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L497">            System.err.println(&quot;Error finding store by ID: &quot; + e.getMessage());</span>
+<span class="nc" id="L498">        }</span>
+<span class="nc" id="L499">        return Optional.empty();</span>
+    }
+
+    /**
+     * Get all stores - Returns list of domain objects
+     */
+    public List&lt;Store&gt; getAllStores() {
+<span class="nc" id="L506">        List&lt;Store&gt; stores = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L507">        String sql = &quot;SELECT id, address, description FROM stores&quot;;</span>
+<span class="nc" id="L508">        try (PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L509">             ResultSet rs = stmt.executeQuery()) {</span>
+<span class="nc bnc" id="L510" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L511">                stores.add(mapResultSetToStore(rs));</span>
+            }
+<span class="nc" id="L513">        } catch (SQLException e) {</span>
+<span class="nc" id="L514">            System.err.println(&quot;Error finding all stores: &quot; + e.getMessage());</span>
+<span class="nc" id="L515">        }</span>
+<span class="nc" id="L516">        return stores;</span>
+    }
+
+    /**
+     * Save store - Accepts domain object
+     */
+    public Store persistStore(Store store) {
+        try {
+<span class="nc" id="L524">            saveStore(store.getId(), store.getAddress(), store.getDescription());</span>
+<span class="nc" id="L525">            return store;</span>
+<span class="nc" id="L526">        } catch (SQLException e) {</span>
+<span class="nc" id="L527">            System.err.println(&quot;Error saving store: &quot; + e.getMessage());</span>
+<span class="nc" id="L528">            throw new RuntimeException(&quot;Failed to save store&quot;, e);</span>
+        }
+    }
+
+    /**
+     * Delete store by ID - Returns boolean
+     */
+    public boolean removeStore(String storeId) {
+        try {
+<span class="nc" id="L537">            return deleteStore(storeId);</span>
+<span class="nc" id="L538">        } catch (SQLException e) {</span>
+<span class="nc" id="L539">            System.err.println(&quot;Error deleting store: &quot; + e.getMessage());</span>
+<span class="nc" id="L540">            return false;</span>
+        }
+    }
+
+    /**
+     * Check if store exists - Handles SQLException internally
+     */
+    public boolean doesStoreExist(String storeId) {
+        try {
+<span class="nc" id="L549">            return storeExists(storeId);</span>
+<span class="nc" id="L550">        } catch (SQLException e) {</span>
+<span class="nc" id="L551">            System.err.println(&quot;Error checking if store exists: &quot; + e.getMessage());</span>
+<span class="nc" id="L552">            return false;</span>
+        }
+    }
+
+    /**
+     * Helper method to map ResultSet to Store object
+     */
+    private Store mapResultSetToStore(ResultSet rs) throws SQLException {
+<span class="nc" id="L560">        return new Store(</span>
+<span class="nc" id="L561">            rs.getString(&quot;id&quot;),</span>
+<span class="nc" id="L562">            rs.getString(&quot;address&quot;),</span>
+<span class="nc" id="L563">            rs.getString(&quot;description&quot;)</span>
+        );
+    }
+
+    // ==================== PRODUCT OPERATIONS ====================
+
+    public ResultSet findProductById(String productId) throws SQLException {
+<span class="nc" id="L570">        String sql = &quot;SELECT id, name, description, size, category, price, temperature FROM products WHERE id = ?&quot;;</span>
+<span class="nc" id="L571">        return executeQuery(sql, productId);</span>
+    }
+
+    public void saveProduct(String id, String name, String description, String size, String category, double price, String temperature) throws SQLException {
+<span class="nc" id="L575">        String updateSql = &quot;UPDATE products SET name = ?, description = ?, size = ?, category = ?, price = ?, temperature = ? WHERE id = ?&quot;;</span>
+<span class="nc" id="L576">        int rowsAffected = executeUpdate(updateSql, name, description, size, category, price, temperature, id);</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">        if (rowsAffected == 0) {</span>
+<span class="nc" id="L578">            String insertSql = &quot;INSERT INTO products (id, name, description, size, category, price, temperature) VALUES (?, ?, ?, ?, ?, ?, ?)&quot;;</span>
+<span class="nc" id="L579">            executeUpdate(insertSql, id, name, description, size, category, price, temperature);</span>
+        }
+<span class="nc" id="L581">    }</span>
+
+    public boolean productExists(String productId) throws SQLException {
+<span class="nc" id="L584">        String sql = &quot;SELECT COUNT(*) FROM products WHERE id = ?&quot;;</span>
+<span class="nc" id="L585">        try (ResultSet rs = executeQuery(sql, productId)) {</span>
+<span class="nc bnc" id="L586" title="All 4 branches missed.">            return rs.next() &amp;&amp; rs.getInt(1) &gt; 0;</span>
+        }
+    }
+
+    public boolean deleteProduct(String productId) throws SQLException {
+<span class="nc" id="L591">        String sql = &quot;DELETE FROM products WHERE id = ?&quot;;</span>
+<span class="nc bnc" id="L592" title="All 2 branches missed.">        return executeUpdate(sql, productId) &gt; 0;</span>
+    }
+
+    public ResultSet findAllProducts() throws SQLException {
+<span class="nc" id="L596">        String sql = &quot;SELECT id, name, description, size, category, price, temperature FROM products&quot;;</span>
+<span class="nc" id="L597">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L598">        return stmt.executeQuery();</span>
+    }
+
+    // ==================== CUSTOMER OPERATIONS ====================
+
+    public ResultSet findCustomerById(String customerId) throws SQLException {
+<span class="nc" id="L604">        String sql = &quot;SELECT id, first_name, last_name, customer_type, email, account_address, store_id, aisle_number, last_seen FROM customers WHERE id = ?&quot;;</span>
+<span class="nc" id="L605">        return executeQuery(sql, customerId);</span>
+    }
+
+    public void saveCustomer(String id, String firstName, String lastName, String customerType, String email, String address, String storeId, String aisleNumber, Timestamp lastSeen) throws SQLException {
+<span class="nc" id="L609">        String updateSql = &quot;UPDATE customers SET first_name = ?, last_name = ?, customer_type = ?, email = ?, account_address = ?, store_id = ?, aisle_number = ?, last_seen = ? WHERE id = ?&quot;;</span>
+<span class="nc" id="L610">        int rowsAffected = executeUpdate(updateSql, firstName, lastName, customerType, email, address, storeId, aisleNumber, lastSeen, id);</span>
+<span class="nc bnc" id="L611" title="All 2 branches missed.">        if (rowsAffected == 0) {</span>
+<span class="nc" id="L612">            String insertSql = &quot;INSERT INTO customers (id, first_name, last_name, customer_type, email, account_address, store_id, aisle_number, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)&quot;;</span>
+<span class="nc" id="L613">            executeUpdate(insertSql, id, firstName, lastName, customerType, email, address, storeId, aisleNumber, lastSeen);</span>
+        }
+<span class="nc" id="L615">    }</span>
+
+    public boolean customerExists(String customerId) throws SQLException {
+<span class="nc" id="L618">        String sql = &quot;SELECT COUNT(*) FROM customers WHERE id = ?&quot;;</span>
+<span class="nc" id="L619">        try (ResultSet rs = executeQuery(sql, customerId)) {</span>
+<span class="nc bnc" id="L620" title="All 4 branches missed.">            return rs.next() &amp;&amp; rs.getInt(1) &gt; 0;</span>
+        }
+    }
+
+    public boolean deleteCustomer(String customerId) throws SQLException {
+<span class="nc" id="L625">        String sql = &quot;DELETE FROM customers WHERE id = ?&quot;;</span>
+<span class="nc bnc" id="L626" title="All 2 branches missed.">        return executeUpdate(sql, customerId) &gt; 0;</span>
+    }
+
+    public ResultSet findAllCustomers() throws SQLException {
+<span class="nc" id="L630">        String sql = &quot;SELECT id, first_name, last_name, customer_type, email, account_address, store_id, aisle_number, last_seen FROM customers&quot;;</span>
+<span class="nc" id="L631">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L632">        return stmt.executeQuery();</span>
+    }
+
+    public ResultSet findCustomersByStoreId(String storeId) throws SQLException {
+<span class="nc" id="L636">        String sql = &quot;SELECT id, first_name, last_name, customer_type, email, account_address, store_id, aisle_number, last_seen FROM customers WHERE store_id = ?&quot;;</span>
+<span class="nc" id="L637">        return executeQuery(sql, storeId);</span>
+    }
+
+    // ==================== BASKET OPERATIONS ====================
+
+    public ResultSet findBasketById(String basketId) throws SQLException {
+<span class="nc" id="L643">        String sql = &quot;SELECT id, customer_id, store_id FROM baskets WHERE id = ?&quot;;</span>
+<span class="nc" id="L644">        return executeQuery(sql, basketId);</span>
+    }
+
+    public void saveBasket(String id, String customerId, String storeId) throws SQLException {
+<span class="nc" id="L648">        String updateSql = &quot;UPDATE baskets SET customer_id = ?, store_id = ? WHERE id = ?&quot;;</span>
+<span class="nc" id="L649">        int rowsAffected = executeUpdate(updateSql, customerId, storeId, id);</span>
+<span class="nc bnc" id="L650" title="All 2 branches missed.">        if (rowsAffected == 0) {</span>
+<span class="nc" id="L651">            String insertSql = &quot;INSERT INTO baskets (id, customer_id, store_id) VALUES (?, ?, ?)&quot;;</span>
+<span class="nc" id="L652">            executeUpdate(insertSql, id, customerId, storeId);</span>
+        }
+<span class="nc" id="L654">    }</span>
+
+    public boolean basketExists(String basketId) throws SQLException {
+<span class="nc" id="L657">        String sql = &quot;SELECT COUNT(*) FROM baskets WHERE id = ?&quot;;</span>
+<span class="nc" id="L658">        try (ResultSet rs = executeQuery(sql, basketId)) {</span>
+<span class="nc bnc" id="L659" title="All 4 branches missed.">            return rs.next() &amp;&amp; rs.getInt(1) &gt; 0;</span>
+        }
+    }
+
+    public boolean deleteBasket(String basketId) throws SQLException {
+        // First delete basket items
+<span class="nc" id="L665">        executeUpdate(&quot;DELETE FROM basket_items WHERE basket_id = ?&quot;, basketId);</span>
+        // Then delete basket
+<span class="nc" id="L667">        String sql = &quot;DELETE FROM baskets WHERE id = ?&quot;;</span>
+<span class="nc bnc" id="L668" title="All 2 branches missed.">        return executeUpdate(sql, basketId) &gt; 0;</span>
+    }
+
+    public ResultSet findAllBaskets() throws SQLException {
+<span class="nc" id="L672">        String sql = &quot;SELECT id, customer_id, store_id FROM baskets&quot;;</span>
+<span class="nc" id="L673">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L674">        return stmt.executeQuery();</span>
+    }
+
+    public void addBasketItem(String basketId, String productId, int count) throws SQLException {
+<span class="nc" id="L678">        String sql = &quot;INSERT INTO basket_items (basket_id, product_id, count) VALUES (?, ?, ?) &quot; +</span>
+                    &quot;ON DUPLICATE KEY UPDATE count = count + ?&quot;;
+<span class="nc" id="L680">        executeUpdate(sql, basketId, productId, count, count);</span>
+<span class="nc" id="L681">    }</span>
+
+    public void updateBasketItemCount(String basketId, String productId, int count) throws SQLException {
+<span class="nc bnc" id="L684" title="All 2 branches missed.">        if (count &lt;= 0) {</span>
+<span class="nc" id="L685">            String sql = &quot;DELETE FROM basket_items WHERE basket_id = ? AND product_id = ?&quot;;</span>
+<span class="nc" id="L686">            executeUpdate(sql, basketId, productId);</span>
+<span class="nc" id="L687">        } else {</span>
+<span class="nc" id="L688">            String sql = &quot;UPDATE basket_items SET count = ? WHERE basket_id = ? AND product_id = ?&quot;;</span>
+<span class="nc" id="L689">            executeUpdate(sql, count, basketId, productId);</span>
+        }
+<span class="nc" id="L691">    }</span>
+
+    public ResultSet findBasketItems(String basketId) throws SQLException {
+<span class="nc" id="L694">        String sql = &quot;SELECT product_id, count FROM basket_items WHERE basket_id = ?&quot;;</span>
+<span class="nc" id="L695">        return executeQuery(sql, basketId);</span>
+    }
+
+    public void clearBasketItems(String basketId) throws SQLException {
+<span class="nc" id="L699">        String sql = &quot;DELETE FROM basket_items WHERE basket_id = ?&quot;;</span>
+<span class="nc" id="L700">        executeUpdate(sql, basketId);</span>
+<span class="nc" id="L701">    }</span>
+
+    // ==================== INVENTORY OPERATIONS ====================
+
+    public ResultSet findInventoryById(String inventoryId) throws SQLException {
+<span class="nc" id="L706">        String sql = &quot;SELECT id, store_id, aisle_number, shelf_id, capacity, count, product_id, inventory_type FROM inventory WHERE id = ?&quot;;</span>
+<span class="nc" id="L707">        return executeQuery(sql, inventoryId);</span>
+    }
+
+    public void saveInventory(String id, String storeId, String aisleNumber, String shelfId, int capacity, int count, String productId, String inventoryType) throws SQLException {
+<span class="nc" id="L711">        String updateSql = &quot;UPDATE inventory SET store_id = ?, aisle_number = ?, shelf_id = ?, capacity = ?, count = ?, product_id = ?, inventory_type = ? WHERE id = ?&quot;;</span>
+<span class="nc" id="L712">        int rowsAffected = executeUpdate(updateSql, storeId, aisleNumber, shelfId, capacity, count, productId, inventoryType, id);</span>
+<span class="nc bnc" id="L713" title="All 2 branches missed.">        if (rowsAffected == 0) {</span>
+<span class="nc" id="L714">            String insertSql = &quot;INSERT INTO inventory (id, store_id, aisle_number, shelf_id, capacity, count, product_id, inventory_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)&quot;;</span>
+<span class="nc" id="L715">            executeUpdate(insertSql, id, storeId, aisleNumber, shelfId, capacity, count, productId, inventoryType);</span>
+        }
+<span class="nc" id="L717">    }</span>
+
+    public boolean inventoryExists(String inventoryId) throws SQLException {
+<span class="nc" id="L720">        String sql = &quot;SELECT COUNT(*) FROM inventory WHERE id = ?&quot;;</span>
+<span class="nc" id="L721">        try (ResultSet rs = executeQuery(sql, inventoryId)) {</span>
+<span class="nc bnc" id="L722" title="All 4 branches missed.">            return rs.next() &amp;&amp; rs.getInt(1) &gt; 0;</span>
+        }
+    }
+
+    public boolean deleteInventory(String inventoryId) throws SQLException {
+<span class="nc" id="L727">        String sql = &quot;DELETE FROM inventory WHERE id = ?&quot;;</span>
+<span class="nc bnc" id="L728" title="All 2 branches missed.">        return executeUpdate(sql, inventoryId) &gt; 0;</span>
+    }
+
+    public ResultSet findAllInventory() throws SQLException {
+<span class="nc" id="L732">        String sql = &quot;SELECT id, store_id, aisle_number, shelf_id, capacity, count, product_id, inventory_type FROM inventory&quot;;</span>
+<span class="nc" id="L733">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L734">        return stmt.executeQuery();</span>
+    }
+
+    // ==================== DEVICE OPERATIONS ====================
+
+    public ResultSet findDeviceById(String deviceId) throws SQLException {
+<span class="nc" id="L740">        String sql = &quot;SELECT id, name, device_type, store_id, aisle_number FROM devices WHERE id = ?&quot;;</span>
+<span class="nc" id="L741">        return executeQuery(sql, deviceId);</span>
+    }
+
+    public void saveDevice(String id, String name, String deviceType, String storeId, String aisleNumber) throws SQLException {
+<span class="nc" id="L745">        String updateSql = &quot;UPDATE devices SET name = ?, device_type = ?, store_id = ?, aisle_number = ? WHERE id = ?&quot;;</span>
+<span class="nc" id="L746">        int rowsAffected = executeUpdate(updateSql, name, deviceType, storeId, aisleNumber, id);</span>
+<span class="nc bnc" id="L747" title="All 2 branches missed.">        if (rowsAffected == 0) {</span>
+<span class="nc" id="L748">            String insertSql = &quot;INSERT INTO devices (id, name, device_type, store_id, aisle_number) VALUES (?, ?, ?, ?, ?)&quot;;</span>
+<span class="nc" id="L749">            executeUpdate(insertSql, id, name, deviceType, storeId, aisleNumber);</span>
+        }
+<span class="nc" id="L751">    }</span>
+
+    public boolean deviceExists(String deviceId) throws SQLException {
+<span class="nc" id="L754">        String sql = &quot;SELECT COUNT(*) FROM devices WHERE id = ?&quot;;</span>
+<span class="nc" id="L755">        try (ResultSet rs = executeQuery(sql, deviceId)) {</span>
+<span class="nc bnc" id="L756" title="All 4 branches missed.">            return rs.next() &amp;&amp; rs.getInt(1) &gt; 0;</span>
+        }
+    }
+
+    public boolean deleteDevice(String deviceId) throws SQLException {
+<span class="nc" id="L761">        String sql = &quot;DELETE FROM devices WHERE id = ?&quot;;</span>
+<span class="nc bnc" id="L762" title="All 2 branches missed.">        return executeUpdate(sql, deviceId) &gt; 0;</span>
+    }
+
+    public ResultSet findAllDevices() throws SQLException {
+<span class="nc" id="L766">        String sql = &quot;SELECT id, name, device_type, store_id, aisle_number FROM devices&quot;;</span>
+<span class="nc" id="L767">        PreparedStatement stmt = getConnection().prepareStatement(sql);</span>
+<span class="nc" id="L768">        return stmt.executeQuery();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

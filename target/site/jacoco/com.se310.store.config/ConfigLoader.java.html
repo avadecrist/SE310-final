@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigLoader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.config</a> &gt; <span class="el_source">ConfigLoader.java</span></div><h1>ConfigLoader.java</h1><pre class="source lang-java linenums">package com.se310.store.config;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+/**
+ * ConfigLoader - Utility class for loading application configuration from properties file.
+ *
+ * This class demonstrates the separation of configuration from code,
+ * following the 12-Factor App principles for configuration management.
+ *
+ * Benefits:
+ * - Externalized configuration: Easy to change without recompiling
+ * - Environment-specific configs: Different properties for dev/test/prod
+ * - Security: Credentials not hardcoded in source code
+ * - Maintainability: Single source of truth for configuration
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-13
+ */
+public class ConfigLoader {
+
+    private static final String CONFIG_FILE = &quot;application.properties&quot;;
+    private static final Properties properties;
+
+    // Load properties file on class initialization
+    static {
+<span class="nc" id="L30">        properties = new Properties();</span>
+<span class="nc" id="L31">        try (InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">            if (input == null) {</span>
+<span class="nc" id="L33">                System.err.println(&quot;Unable to find &quot; + CONFIG_FILE);</span>
+<span class="nc" id="L34">                throw new RuntimeException(&quot;Configuration file not found: &quot; + CONFIG_FILE);</span>
+            }
+<span class="nc" id="L36">            properties.load(input);</span>
+<span class="nc" id="L37">            System.out.println(&quot;ConfigLoader: Successfully loaded &quot; + CONFIG_FILE);</span>
+<span class="nc" id="L38">        } catch (IOException ex) {</span>
+<span class="nc" id="L39">            System.err.println(&quot;Error loading configuration file: &quot; + ex.getMessage());</span>
+<span class="nc" id="L40">            throw new RuntimeException(&quot;Failed to load configuration&quot;, ex);</span>
+<span class="nc" id="L41">        }</span>
+<span class="nc" id="L42">    }</span>
+
+    // Private constructor to prevent instantiation
+<span class="nc" id="L45">    private ConfigLoader() {</span>
+<span class="nc" id="L46">        throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated&quot;);</span>
+    }
+
+    /**
+     * Get property value by key
+     *
+     * @param key The property key
+     * @return The property value, or null if not found
+     */
+    public static String getProperty(String key) {
+<span class="nc" id="L56">        return properties.getProperty(key);</span>
+    }
+
+    /**
+     * Get property value with default fallback
+     *
+     * @param key The property key
+     * @param defaultValue The default value if key not found
+     * @return The property value, or defaultValue if not found
+     */
+    public static String getProperty(String key, String defaultValue) {
+<span class="nc" id="L67">        return properties.getProperty(key, defaultValue);</span>
+    }
+
+    // ==================== SERVER CONFIGURATION ====================
+
+    public static int getServerPort() {
+<span class="nc" id="L73">        String portString = getProperty(&quot;server.port&quot;, &quot;8080&quot;);</span>
+        try {
+<span class="nc" id="L75">            return Integer.parseInt(portString);</span>
+<span class="nc" id="L76">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L77">            System.err.println(&quot;Invalid server.port value: &quot; + portString + &quot;, using default 8080&quot;);</span>
+<span class="nc" id="L78">            return 8080;</span>
+        }
+    }
+
+    public static String getApiBaseUrl() {
+<span class="nc" id="L83">        return getProperty(&quot;api.base.url&quot;, &quot;http://localhost:8080/api/v1&quot;);</span>
+    }
+
+    // ==================== SECURITY CONFIGURATION ====================
+
+    public static String getEncryptionKey() {
+<span class="nc" id="L89">        return getProperty(&quot;security.encryption.key&quot;, &quot;DefaultInsecureKey123!&quot;);</span>
+    }
+
+    // ==================== DATABASE CONFIGURATION ====================
+
+    public static String getDbDriver() {
+<span class="nc" id="L95">        return getProperty(&quot;db.driver&quot;, &quot;org.h2.Driver&quot;);</span>
+    }
+
+    public static String getDbUrl() {
+<span class="nc" id="L99">        return getProperty(&quot;db.url&quot;, &quot;jdbc:h2:~/smartstore/storedb;AUTO_SERVER=TRUE&quot;);</span>
+    }
+
+    public static String getDbUser() {
+<span class="nc" id="L103">        return getProperty(&quot;db.user&quot;, &quot;sa&quot;);</span>
+    }
+
+    public static String getDbPassword() {
+<span class="nc" id="L107">        return getProperty(&quot;db.password&quot;, &quot;&quot;);</span>
+    }
+
+    // ==================== ADMIN USER CONFIGURATION ====================
+
+    public static String getAdminEmail() {
+<span class="nc" id="L113">        return getProperty(&quot;admin.email&quot;, &quot;admin@store.com&quot;);</span>
+    }
+
+    public static String getAdminPassword() {
+<span class="nc" id="L117">        return getProperty(&quot;admin.password&quot;, &quot;admin123&quot;);</span>
+    }
+
+    public static String getAdminName() {
+<span class="nc" id="L121">        return getProperty(&quot;admin.name&quot;, &quot;Admin User&quot;);</span>
+    }
+
+    public static String getAdminRole() {
+<span class="nc" id="L125">        return getProperty(&quot;admin.role&quot;, &quot;ADMIN&quot;);</span>
+    }
+
+    // ==================== REGULAR USER CONFIGURATION ====================
+
+    public static String getUserEmail() {
+<span class="nc" id="L131">        return getProperty(&quot;user.email&quot;, &quot;user@store.com&quot;);</span>
+    }
+
+    public static String getUserPassword() {
+<span class="nc" id="L135">        return getProperty(&quot;user.password&quot;, &quot;user123&quot;);</span>
+    }
+
+    public static String getUserName() {
+<span class="nc" id="L139">        return getProperty(&quot;user.name&quot;, &quot;Regular User&quot;);</span>
+    }
+
+    public static String getUserRole() {
+<span class="nc" id="L143">        return getProperty(&quot;user.role&quot;, &quot;USER&quot;);</span>
+    }
+
+    /**
+     * Get all properties (for debugging)
+     *
+     * @return Properties object
+     */
+    public static Properties getAllProperties() {
+<span class="nc" id="L152">        return (Properties) properties.clone();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

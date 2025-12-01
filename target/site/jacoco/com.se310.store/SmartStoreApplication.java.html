@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SmartStoreApplication.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store</a> &gt; <span class="el_source">SmartStoreApplication.java</span></div><h1>SmartStoreApplication.java</h1><pre class="source lang-java linenums">package com.se310.store;
+
+import com.se310.store.controller.StoreController;
+import com.se310.store.controller.UserController;
+import com.se310.store.config.ConfigLoader;
+import com.se310.store.data.DataManager;
+import com.se310.store.config.SampleDataLoader;
+import com.se310.store.repository.StoreRepository;
+import com.se310.store.repository.UserRepository;
+import com.se310.store.security.AuthenticationFilter;
+import com.se310.store.security.AuthorizationFilter;
+import com.se310.store.service.AuthenticationService;
+import com.se310.store.service.StoreService;
+import com.se310.store.servlet.SwaggerServlet;
+import org.apache.catalina.Context;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.startup.Tomcat;
+import org.apache.tomcat.util.descriptor.web.FilterDef;
+import org.apache.tomcat.util.descriptor.web.FilterMap;
+import org.h2.server.web.JakartaWebServlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+
+/**
+ * Main class responsible for starting and managing the Smart Store Application.
+ * Provides multiple application launch methods and sets up the server lifecycle, dependency injection,
+ * and application-layer configurations for proper operation of the entire system.
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-11
+ */
+
+<span class="nc" id="L36">public class SmartStoreApplication {</span>
+
+<span class="nc" id="L38">    private static final Logger logger = LoggerFactory.getLogger(SmartStoreApplication.class);</span>
+<span class="nc" id="L39">    private static final int PORT = ConfigLoader.getServerPort();</span>
+
+    private Tomcat tomcat;
+
+    public static void main(String[] args) {
+<span class="nc" id="L44">        SmartStoreApplication app = new SmartStoreApplication();</span>
+        try {
+<span class="nc" id="L46">            app.start();</span>
+<span class="nc" id="L47">        } catch (Exception e) {</span>
+<span class="nc" id="L48">            logger.error(&quot;Failed to start application&quot;, e);</span>
+<span class="nc" id="L49">            System.exit(1);</span>
+<span class="nc" id="L50">        }</span>
+<span class="nc" id="L51">    }</span>
+
+    /**
+     * Starts the application.
+     * Demonstrates the complete application lifecycle.
+     * Blocks until server shutdown (suitable for main application).
+     */
+    public void start() throws LifecycleException {
+<span class="nc" id="L59">        startServer(true); // blocking mode</span>
+<span class="nc" id="L60">    }</span>
+
+    /**
+     * Starts the application without blocking.
+     * Suitable for testing where you need the server running but want to continue execution.
+     */
+    public void startNonBlocking() throws LifecycleException {
+<span class="nc" id="L67">        startServer(false); // non-blocking mode</span>
+<span class="nc" id="L68">    }</span>
+
+    /**
+     * Internal method to start the server with optional blocking.
+     *
+     * @param block if true, blocks until server shutdown; if false, returns immediately
+     */
+    private void startServer(boolean block) throws LifecycleException {
+<span class="nc" id="L76">        logger.info(&quot;Starting Smart Store Application...&quot;);</span>
+
+        // Step 1: Initialize database
+<span class="nc" id="L79">        logger.info(&quot;Initializing database...&quot;);</span>
+<span class="nc" id="L80">        DataManager dataManager = DataManager.getInstance();</span>
+
+        // Step 2: Create repositories (Data Access Layer)
+<span class="nc" id="L83">        logger.info(&quot;Creating repositories...&quot;);</span>
+<span class="nc" id="L84">        StoreRepository storeRepository = new StoreRepository(dataManager);</span>
+<span class="nc" id="L85">        UserRepository userRepository = new UserRepository(dataManager);</span>
+
+        // Step 3: Create services (Business Logic Layer)
+<span class="nc" id="L88">        logger.info(&quot;Creating services...&quot;);</span>
+<span class="nc" id="L89">        StoreService storeService = new StoreService(storeRepository);</span>
+<span class="nc" id="L90">        AuthenticationService userService = new AuthenticationService(userRepository);</span>
+
+        // Step 4: Create controllers (Presentation Layer)
+<span class="nc" id="L93">        logger.info(&quot;Creating controllers...&quot;);</span>
+<span class="nc" id="L94">        StoreController storeController = new StoreController(storeService);</span>
+<span class="nc" id="L95">        UserController userController = new UserController(userService);</span>
+
+        // Step 5: Configure and start Tomcat
+<span class="nc" id="L98">        logger.info(&quot;Configuring Tomcat server...&quot;);</span>
+<span class="nc" id="L99">        tomcat = new Tomcat();</span>
+<span class="nc" id="L100">        tomcat.setPort(PORT);</span>
+<span class="nc" id="L101">        tomcat.getConnector(); // Initialize default connector</span>
+
+        // Create context
+<span class="nc" id="L104">        String contextPath = &quot;&quot;;</span>
+<span class="nc" id="L105">        String docBase = new File(&quot;.&quot;).getAbsolutePath();</span>
+<span class="nc" id="L106">        Context context = tomcat.addContext(contextPath, docBase);</span>
+
+        // Register Store Controller servlet
+<span class="nc" id="L109">        Tomcat.addServlet(context, &quot;storeController&quot;, storeController);</span>
+<span class="nc" id="L110">        context.addServletMappingDecoded(&quot;/api/v1/stores/*&quot;, &quot;storeController&quot;);</span>
+
+        // Register User Controller servlet
+<span class="nc" id="L113">        Tomcat.addServlet(context, &quot;userController&quot;, userController);</span>
+<span class="nc" id="L114">        context.addServletMappingDecoded(&quot;/api/v1/users/*&quot;, &quot;userController&quot;);</span>
+
+        // Register H2 Console servlet (web interface for database)
+        // Accessible at: http://localhost:8080/h2-console
+<span class="nc" id="L118">        JakartaWebServlet h2Servlet = new JakartaWebServlet();</span>
+<span class="nc" id="L119">        Tomcat.addServlet(context, &quot;h2Console&quot;, h2Servlet);</span>
+<span class="nc" id="L120">        context.addServletMappingDecoded(&quot;/h2-console/*&quot;, &quot;h2Console&quot;);</span>
+
+        // Register Swagger UI servlet
+<span class="nc" id="L123">        SwaggerServlet swaggerServlet = new SwaggerServlet();</span>
+<span class="nc" id="L124">        Tomcat.addServlet(context, &quot;swagger&quot;, swaggerServlet);</span>
+<span class="nc" id="L125">        context.addServletMappingDecoded(&quot;/swagger-ui/*&quot;, &quot;swagger&quot;);</span>
+<span class="nc" id="L126">        context.addServletMappingDecoded(&quot;/api-docs&quot;, &quot;swagger&quot;);</span>
+
+        // Register WebJars servlet for serving static resources (CSS, JS from dependencies)
+<span class="nc" id="L129">        org.apache.catalina.servlets.DefaultServlet webJarsServlet = new org.apache.catalina.servlets.DefaultServlet();</span>
+<span class="nc" id="L130">        Tomcat.addServlet(context, &quot;webJarsServlet&quot;, webJarsServlet);</span>
+<span class="nc" id="L131">        context.addServletMappingDecoded(&quot;/webjars/*&quot;, &quot;webJarsServlet&quot;);</span>
+
+        // Configure Authentication Filter for H2 Console and Swagger UI
+        // These development tools should only be accessible to authenticated users
+<span class="nc" id="L135">        logger.info(&quot;Configuring authentication filters...&quot;);</span>
+
+        // Store the authentication service in servlet context for filter access
+<span class="nc" id="L138">        context.getServletContext().setAttribute(&quot;authenticationService&quot;, userService);</span>
+
+        // Create and register authentication filter
+<span class="nc" id="L141">        AuthenticationFilter authFilter = new AuthenticationFilter(userService);</span>
+<span class="nc" id="L142">        FilterDef authFilterDef = new FilterDef();</span>
+<span class="nc" id="L143">        authFilterDef.setFilterName(&quot;authenticationFilter&quot;);</span>
+<span class="nc" id="L144">        authFilterDef.setFilter(authFilter);</span>
+<span class="nc" id="L145">        context.addFilterDef(authFilterDef);</span>
+
+        // Map authentication filter to H2 Console
+<span class="nc" id="L148">        FilterMap h2FilterMap = new FilterMap();</span>
+<span class="nc" id="L149">        h2FilterMap.setFilterName(&quot;authenticationFilter&quot;);</span>
+<span class="nc" id="L150">        h2FilterMap.addURLPattern(&quot;/h2-console/*&quot;);</span>
+<span class="nc" id="L151">        context.addFilterMap(h2FilterMap);</span>
+
+        // Map authentication filter to Swagger UI
+<span class="nc" id="L154">        FilterMap swaggerFilterMap = new FilterMap();</span>
+<span class="nc" id="L155">        swaggerFilterMap.setFilterName(&quot;authenticationFilter&quot;);</span>
+<span class="nc" id="L156">        swaggerFilterMap.addURLPattern(&quot;/swagger-ui/*&quot;);</span>
+<span class="nc" id="L157">        swaggerFilterMap.addURLPattern(&quot;/api-docs&quot;);</span>
+<span class="nc" id="L158">        context.addFilterMap(swaggerFilterMap);</span>
+
+<span class="nc" id="L160">        logger.info(&quot;Authentication required for H2 Console and Swagger UI&quot;);</span>
+
+        //TODO: Configure Authentication Filter for Store API
+<span class="nc" id="L163">        logger.info(&quot;Configuring authentication filter for Store API...&quot;);</span>
+
+        // Map authentication filter to Store API
+<span class="nc" id="L166">        FilterMap storeAuthFilterMap = new FilterMap();</span>
+<span class="nc" id="L167">        storeAuthFilterMap.setFilterName(&quot;authenticationFilter&quot;);</span>
+<span class="nc" id="L168">        storeAuthFilterMap.addURLPattern(&quot;/api/v1/stores/*&quot;);</span>
+<span class="nc" id="L169">        context.addFilterMap(storeAuthFilterMap);</span>
+
+        //TODO: Create and register Authorization Filter
+
+        //TODO: Configure Authentication Filter for User API
+<span class="nc" id="L174">        logger.info(&quot;Configuring authentication filter for User API...&quot;);</span>
+
+        // Map authentication filter to User API
+<span class="nc" id="L177">        FilterMap userAuthFilterMap = new FilterMap();</span>
+<span class="nc" id="L178">        userAuthFilterMap.setFilterName(&quot;authenticationFilter&quot;);</span>
+<span class="nc" id="L179">        userAuthFilterMap.addURLPattern(&quot;/api/v1/users/*&quot;);</span>
+<span class="nc" id="L180">        context.addFilterMap(userAuthFilterMap);</span>
+
+        //TODO: Map Authorization filter to User API
+
+        // Step 6: Load sample data
+<span class="nc" id="L185">        logger.info(&quot;Loading sample data...&quot;);</span>
+<span class="nc" id="L186">        loadSampleData(userService, storeService);</span>
+
+        // Step 7: Start Tomcat
+<span class="nc" id="L189">        tomcat.start();</span>
+
+<span class="nc" id="L191">        logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L192">        logger.info(&quot;Smart Store Application started successfully!&quot;);</span>
+<span class="nc" id="L193">        logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L194">        logger.info(&quot;Server running on: http://localhost:{}&quot;, PORT);</span>
+<span class="nc" id="L195">        logger.info(&quot;&quot;);</span>
+<span class="nc" id="L196">        logger.info(&quot;Available endpoints:&quot;);</span>
+<span class="nc" id="L197">        logger.info(&quot;  - Store API:      http://localhost:{}/api/v1/stores (Authentication Required)&quot;, PORT);</span>
+<span class="nc" id="L198">        logger.info(&quot;  - User API:       http://localhost:{}/api/v1/users (Authentication Required)&quot;, PORT);</span>
+<span class="nc" id="L199">        logger.info(&quot;  - Swagger UI:     http://localhost:{}/swagger-ui/ (Authentication Required)&quot;, PORT);</span>
+<span class="nc" id="L200">        logger.info(&quot;  - API Docs:       http://localhost:{}/api/docs/ (Authentication Required)&quot;, PORT);</span>
+<span class="nc" id="L201">        logger.info(&quot;  - H2 Console:     http://localhost:{}/h2-console/ (Authentication Required)&quot;, PORT);</span>
+<span class="nc" id="L202">        logger.info(&quot;&quot;);</span>
+<span class="nc" id="L203">        logger.info(&quot;H2 Database Connection Info:&quot;);</span>
+<span class="nc" id="L204">        logger.info(&quot;  - JDBC URL:       {}&quot;, ConfigLoader.getDbUrl());</span>
+<span class="nc" id="L205">        logger.info(&quot;  - Username:       {}&quot;, ConfigLoader.getDbUser());</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        logger.info(&quot;  - Password:       {}&quot;, ConfigLoader.getDbPassword().isEmpty() ? &quot;(leave blank)&quot; : &quot;***&quot;);</span>
+<span class="nc" id="L207">        logger.info(&quot;&quot;);</span>
+<span class="nc" id="L208">        logger.info(&quot;AUTHENTICATION &amp; AUTHORIZATION:&quot;);</span>
+<span class="nc" id="L209">        logger.info(&quot;  H2 Console and Swagger UI require HTTP Basic Authentication&quot;);</span>
+<span class="nc" id="L210">        logger.info(&quot;  Store API and User API require HTTP Basic Authentication only&quot;);</span>
+<span class="nc" id="L211">        logger.info(&quot;  Your browser will prompt for username and password&quot;);</span>
+<span class="nc" id="L212">        logger.info(&quot;&quot;);</span>
+<span class="nc" id="L213">        logger.info(&quot;Test Credentials (from application.properties):&quot;);</span>
+<span class="nc" id="L214">        logger.info(&quot;  ADMIN:    {} / {} (Full access)&quot;, ConfigLoader.getAdminEmail(), ConfigLoader.getAdminPassword());</span>
+<span class="nc" id="L215">        logger.info(&quot;  USER:     {} / {}&quot;, ConfigLoader.getUserEmail(), ConfigLoader.getUserPassword());</span>
+<span class="nc" id="L216">        logger.info(&quot;=&quot;.repeat(80));</span>
+
+        // Add shutdown hook
+<span class="nc" id="L219">        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));</span>
+
+        // Keep the server running (only if blocking mode)
+<span class="nc bnc" id="L222" title="All 2 branches missed.">        if (block) {</span>
+<span class="nc" id="L223">            tomcat.getServer().await();</span>
+        }
+<span class="nc" id="L225">    }</span>
+
+    /**
+     * Stops the server.
+     * Useful for testing scenarios where you need to explicitly stop the server.
+     */
+    public void stop() throws LifecycleException {
+<span class="nc bnc" id="L232" title="All 2 branches missed.">        if (tomcat != null) {</span>
+<span class="nc" id="L233">            tomcat.stop();</span>
+        }
+<span class="nc" id="L235">    }</span>
+
+    /**
+     * Loads sample data into the system for demonstration and testing.
+     * Uses SampleDataLoader to populate comprehensive data including:
+     * - Users, Stores, Aisles, Shelves, Products, Inventory
+     * - Customers, Baskets, IoT Devices
+     */
+    private void loadSampleData(AuthenticationService userService, StoreService storeService) {
+<span class="nc" id="L244">        logger.info(&quot;Loading sample data using SampleDataLoader...&quot;);</span>
+
+        try {
+            // Create data loader instance
+<span class="nc" id="L248">            SampleDataLoader dataLoader = new SampleDataLoader(storeService, userService);</span>
+
+            // Load all sample data (comprehensive dataset)
+<span class="nc" id="L251">            dataLoader.loadAllSampleData();</span>
+
+            // Print summary
+<span class="nc" id="L254">            dataLoader.printDataSummary();</span>
+
+<span class="nc" id="L256">            logger.info(&quot;Sample data loaded successfully&quot;);</span>
+<span class="nc" id="L257">        } catch (Exception e) {</span>
+<span class="nc" id="L258">            logger.warn(&quot;Error loading sample data: {}&quot;, e.getMessage());</span>
+            // Continue even if sample data fails to load
+<span class="nc" id="L260">        }</span>
+<span class="nc" id="L261">    }</span>
+
+    /**
+     * Shuts down the application gracefully.
+     */
+    private void shutdown() {
+<span class="nc" id="L267">        logger.info(&quot;Shutting down Commission Calculator Integration Application...&quot;);</span>
+
+        try {
+<span class="nc bnc" id="L270" title="All 2 branches missed.">            if (tomcat != null) {</span>
+<span class="nc" id="L271">                tomcat.stop();</span>
+<span class="nc" id="L272">                tomcat.destroy();</span>
+            }
+
+<span class="nc" id="L275">            logger.info(&quot;Application shut down successfully&quot;);</span>
+<span class="nc" id="L276">        } catch (Exception e) {</span>
+<span class="nc" id="L277">            logger.error(&quot;Error during shutdown&quot;, e);</span>
+<span class="nc" id="L278">        }</span>
+<span class="nc" id="L279">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

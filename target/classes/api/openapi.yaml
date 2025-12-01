@@ -1,0 +1,1060 @@
+openapi: 3.0.3
+info:
+  title: SE310 Final Project - Smart Store API
+  description: |
+    Comprehensive REST API for Smart Store Application.
+
+    This API supports complete store management including:
+    - Store management (CRUD operations)
+    - User management (registration and authentication)
+    - Aisle management (organize store layout)
+    - Shelf management (inventory locations)
+    - Product catalog management
+    - Customer tracking and location
+    - Shopping basket operations
+    - Inventory management
+    - IoT Device management (sensors and appliances)
+
+    The API follows RESTful principles with nested resources and returns JSON responses.
+  version: 1.0.0
+  contact:
+    name: Sergey L. Sundukovskiy Ph.D.
+    email: sundukovskiy@chapman.edu
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+tags:
+  - name: Stores
+    description: Store management operations
+  - name: Users
+    description: User management and authentication
+  - name: Aisles
+    description: Store aisle management (nested under stores)
+  - name: Shelves
+    description: Shelf management (nested under aisles)
+  - name: Products
+    description: Product catalog management
+  - name: Customers
+    description: Customer tracking and management
+  - name: Baskets
+    description: Shopping basket operations
+  - name: Inventory
+    description: Inventory management
+  - name: Devices
+    description: IoT device management (sensors and appliances)
+
+paths:
+  # ==================== STORES ====================
+  /stores:
+    get:
+      tags: [Stores]
+      summary: Get all stores
+      description: Retrieve a list of all stores in the system
+      operationId: getAllStores
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Store'
+
+    post:
+      tags: [Stores]
+      summary: Create a new store
+      description: Provision a new store with the specified details
+      operationId: createStore
+      parameters:
+        - name: storeId
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "store1"
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "Downtown Store"
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "123 Main St, City, State 12345"
+      responses:
+        '201':
+          description: Store created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /stores/{storeId}:
+    get:
+      tags: [Stores]
+      summary: Get store by ID
+      operationId: getStoreById
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Stores]
+      summary: Update store
+      operationId: updateStore
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: address
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Store updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+
+    delete:
+      tags: [Stores]
+      summary: Delete store
+      operationId: deleteStore
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+      responses:
+        '204':
+          description: Store deleted successfully
+
+  # ==================== AISLES ====================
+  /stores/{storeId}/aisles:
+    post:
+      tags: [Aisles]
+      summary: Create aisle in store
+      operationId: provisionAisle
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+        - name: aisleNumber
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "A1"
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [NORTH, SOUTH, EAST, WEST]
+      responses:
+        '201':
+          description: Aisle created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aisle'
+
+  /stores/{storeId}/aisles/{aisleNumber}:
+    get:
+      tags: [Aisles]
+      summary: Get aisle by number
+      operationId: showAisle
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+        - $ref: '#/components/parameters/AisleNumber'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aisle'
+
+  # ==================== SHELVES ====================
+  /stores/{storeId}/aisles/{aisleNumber}/shelves:
+    post:
+      tags: [Shelves]
+      summary: Create shelf in aisle
+      operationId: provisionShelf
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+        - $ref: '#/components/parameters/AisleNumber'
+        - name: shelfId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: level
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [LOW, MEDIUM, HIGH]
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: temperature
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [FROZEN, REFRIGERATED, AMBIENT, WARM, HOT]
+      responses:
+        '201':
+          description: Shelf created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shelf'
+
+  /stores/{storeId}/aisles/{aisleNumber}/shelves/{shelfId}:
+    get:
+      tags: [Shelves]
+      summary: Get shelf by ID
+      operationId: showShelf
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+        - $ref: '#/components/parameters/AisleNumber'
+        - $ref: '#/components/parameters/ShelfId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shelf'
+
+  # ==================== PRODUCTS ====================
+  /products:
+    post:
+      tags: [Products]
+      summary: Create product
+      operationId: provisionProduct
+      parameters:
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: size
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: price
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: temperature
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [FROZEN, REFRIGERATED, AMBIENT, WARM, HOT]
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  /products/{productId}:
+    get:
+      tags: [Products]
+      summary: Get product by ID
+      operationId: showProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  # ==================== INVENTORY ====================
+  /inventory:
+    post:
+      tags: [Inventory]
+      summary: Create inventory record
+      operationId: provisionInventory
+      parameters:
+        - name: inventoryId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: storeId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: aisleNumber
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: shelfId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: capacity
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: count
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [SHELF_INVENTORY, STORE_INVENTORY]
+      responses:
+        '201':
+          description: Inventory created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventory'
+
+  /inventory/{inventoryId}:
+    get:
+      tags: [Inventory]
+      summary: Get inventory by ID
+      operationId: showInventory
+      parameters:
+        - $ref: '#/components/parameters/InventoryId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventory'
+
+    put:
+      tags: [Inventory]
+      summary: Update inventory count
+      operationId: updateInventory
+      parameters:
+        - $ref: '#/components/parameters/InventoryId'
+        - name: count
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Inventory updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventory'
+
+  # ==================== CUSTOMERS ====================
+  /customers:
+    post:
+      tags: [Customers]
+      summary: Register customer
+      operationId: provisionCustomer
+      parameters:
+        - name: customerId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: firstName
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lastName
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [REGISTERED, GUEST]
+        - name: email
+          in: query
+          schema:
+            type: string
+        - name: address
+          in: query
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Customer registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+  /customers/{customerId}:
+    get:
+      tags: [Customers]
+      summary: Get customer by ID
+      operationId: showCustomer
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+    put:
+      tags: [Customers]
+      summary: Update customer location
+      operationId: updateCustomer
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+        - name: storeId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: aisleNumber
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+  # ==================== BASKETS ====================
+  /baskets:
+    post:
+      tags: [Baskets]
+      summary: Create basket
+      operationId: provisionBasket
+      parameters:
+        - name: basketId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Basket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+  /baskets/{basketId}:
+    get:
+      tags: [Baskets]
+      summary: Get basket by ID
+      operationId: showBasket
+      parameters:
+        - $ref: '#/components/parameters/BasketId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+  /baskets/{basketId}/assign:
+    post:
+      tags: [Baskets]
+      summary: Assign basket to customer
+      operationId: assignCustomerBasket
+      parameters:
+        - $ref: '#/components/parameters/BasketId'
+        - name: customerId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Basket assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+  /baskets/{basketId}/products:
+    post:
+      tags: [Baskets]
+      summary: Add product to basket
+      operationId: addBasketProduct
+      parameters:
+        - $ref: '#/components/parameters/BasketId'
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: count
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product added to basket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+    delete:
+      tags: [Baskets]
+      summary: Remove product from basket
+      operationId: removeBasketProduct
+      parameters:
+        - $ref: '#/components/parameters/BasketId'
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: count
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product removed from basket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+  /baskets/{basketId}/clear:
+    post:
+      tags: [Baskets]
+      summary: Clear basket
+      operationId: clearBasket
+      parameters:
+        - $ref: '#/components/parameters/BasketId'
+      responses:
+        '200':
+          description: Basket cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+  /customers/{customerId}/basket:
+    get:
+      tags: [Baskets]
+      summary: Get customer's basket
+      operationId: getCustomerBasket
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+  # ==================== DEVICES ====================
+  /stores/{storeId}/devices:
+    post:
+      tags: [Devices]
+      summary: Provision IoT device
+      operationId: provisionDevice
+      parameters:
+        - $ref: '#/components/parameters/StoreId'
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [CAMERA, MICROPHONE, TURNSTILE, ROBOT, SPEAKER]
+        - name: aisleNumber
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Device provisioned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+
+  /devices/{deviceId}:
+    get:
+      tags: [Devices]
+      summary: Get device by ID
+      operationId: showDevice
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+
+  /devices/{deviceId}/event:
+    post:
+      tags: [Devices]
+      summary: Raise device event (for sensors)
+      operationId: raiseEvent
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - name: event
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event processed successfully
+
+  /devices/{deviceId}/command:
+    post:
+      tags: [Devices]
+      summary: Issue command to device (for appliances)
+      operationId: issueCommand
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - name: command
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Command issued successfully
+
+  # ==================== USERS ====================
+  /users:
+    get:
+      tags: [Users]
+      summary: Get all users
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+    post:
+      tags: [Users]
+      summary: Register new user
+      operationId: registerUser
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+        - name: password
+          in: query
+          required: true
+          schema:
+            type: string
+            format: password
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: User already exists
+
+  /users/{email}:
+    get:
+      tags: [Users]
+      summary: Get user by email
+      operationId: getUserByEmail
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Users]
+      summary: Update user
+      operationId: updateUser
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+        - name: password
+          in: query
+          schema:
+            type: string
+            format: password
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+    delete:
+      tags: [Users]
+      summary: Delete user
+      operationId: deleteUser
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '204':
+          description: User deleted successfully
+
+# ==================== COMPONENTS ====================
+components:
+  parameters:
+    StoreId:
+      name: storeId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "store1"
+
+    AisleNumber:
+      name: aisleNumber
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "A1"
+
+    ShelfId:
+      name: shelfId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "shelf1"
+
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "prod123"
+
+    CustomerId:
+      name: customerId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "cust001"
+
+    BasketId:
+      name: basketId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "basket1"
+
+    InventoryId:
+      name: inventoryId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "inv001"
+
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "device1"
+
+  schemas:
+    Store:
+      type: object
+      properties:
+        id:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+
+    Aisle:
+      type: object
+      properties:
+        number:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+          enum: [NORTH, SOUTH, EAST, WEST]
+
+    Shelf:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        description:
+          type: string
+        temperature:
+          type: string
+          enum: [FROZEN, REFRIGERATED, AMBIENT, WARM, HOT]
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        size:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: double
+        temperature:
+          type: string
+          enum: [FROZEN, REFRIGERATED, AMBIENT, WARM, HOT]
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        type:
+          type: string
+          enum: [REGISTERED, GUEST]
+        email:
+          type: string
+        address:
+          type: string
+        storeLocation:
+          $ref: '#/components/schemas/StoreLocation'
+
+    Basket:
+      type: object
+      properties:
+        id:
+          type: string
+        products:
+          type: object
+          additionalProperties:
+            type: integer
+
+    Inventory:
+      type: object
+      properties:
+        id:
+          type: string
+        storeId:
+          type: string
+        aisleNumber:
+          type: string
+        shelfId:
+          type: string
+        capacity:
+          type: integer
+        count:
+          type: integer
+        productId:
+          type: string
+        type:
+          type: string
+          enum: [SHELF_INVENTORY, STORE_INVENTORY]
+
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        location:
+          $ref: '#/components/schemas/StoreLocation'
+
+    StoreLocation:
+      type: object
+      properties:
+        storeId:
+          type: string
+        aisleNumber:
+          type: string
+
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        name:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

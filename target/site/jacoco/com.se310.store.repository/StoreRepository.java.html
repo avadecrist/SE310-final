@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoreRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.repository</a> &gt; <span class="el_source">StoreRepository.java</span></div><h1>StoreRepository.java</h1><pre class="source lang-java linenums">package com.se310.store.repository;
+
+import com.se310.store.data.DataManager;
+import com.se310.store.model.Store;
+
+import java.util.*;
+
+/**
+ * Store Repository implements Repository Pattern for store data access layer
+ * Uses DataManager for persistent storage
+ *
+ * This repository is completely database-agnostic - it has no knowledge of SQL,
+ * ResultSets, or SQLExceptions. All database-specific logic is encapsulated in DataManager.
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-06
+ */
+public class StoreRepository {
+
+    //TODO: Implement Store persistence layer using Repository Pattern
+
+    private final DataManager dataManager;
+
+<span class="nc" id="L25">    public StoreRepository(DataManager dataManager) {</span>
+<span class="nc bnc" id="L26" title="All 2 branches missed.">        if (dataManager == null) {</span>
+<span class="nc" id="L27">            throw new NullPointerException(&quot;DataManager must not be null&quot;);</span>
+        }
+<span class="nc" id="L29">        this.dataManager = dataManager;</span>
+<span class="nc" id="L30">    }</span>
+
+    public Optional&lt;Store&gt; findById(String storeId) {
+<span class="nc bnc" id="L33" title="All 4 branches missed.">        if (storeId == null || storeId.isBlank()) {</span>
+<span class="nc" id="L34">            return Optional.empty();</span>
+        }
+<span class="nc" id="L36">        return dataManager.getStoreById(storeId);</span>
+    }
+
+    public boolean existsById(String storeId) {
+<span class="nc bnc" id="L40" title="All 4 branches missed.">        if (storeId == null || storeId.isBlank()) {</span>
+<span class="nc" id="L41">            return false;</span>
+        }
+<span class="nc" id="L43">        return dataManager.doesStoreExist(storeId);</span>
+    }
+
+    public Store save(Store store) {
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        if (store == null) {</span>
+<span class="nc" id="L48">            throw new NullPointerException(&quot;Store must not be null&quot;);</span>
+        }
+
+<span class="nc bnc" id="L51" title="All 4 branches missed.">        if (store.getId() == null || store.getId().isBlank()) {</span>
+<span class="nc" id="L52">            throw new IllegalArgumentException(&quot;Store id must not be null or blank&quot;);</span>
+        }
+<span class="nc" id="L54">        return dataManager.persistStore(store);</span>
+    }
+
+    public boolean delete(String storeId) {
+<span class="nc bnc" id="L58" title="All 4 branches missed.">        if (storeId == null || storeId.isBlank()) {</span>
+<span class="nc" id="L59">            return false;</span>
+        }
+<span class="nc" id="L61">        return dataManager.removeStore(storeId);</span>
+    }
+
+    public List&lt;Store&gt; findAll() {
+<span class="nc" id="L65">        return dataManager.getAllStores();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

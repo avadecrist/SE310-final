@@ -1,0 +1,777 @@
+{
+  "info": {
+    "name": "SE310 Final Project - Smart Store Comprehensive API",
+    "description": "Complete Postman collection for testing all Smart Store REST API endpoints.\n\nIncludes:\n- Store management\n- User management\n- Aisle management\n- Shelf management\n- Product catalog\n- Customer tracking\n- Shopping baskets\n- Inventory management\n- IoT Devices",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Stores",
+      "description": "Store management operations",
+      "item": [
+        {
+          "name": "Get All Stores",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores"]
+            }
+          }
+        },
+        {
+          "name": "Get Store by ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId"],
+              "variable": [{"key": "storeId", "value": "store1"}]
+            }
+          }
+        },
+        {
+          "name": "Create Store",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores?storeId=store2&name=New Store&address=456 Elm St",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores"],
+              "query": [
+                {"key": "storeId", "value": "store2"},
+                {"key": "name", "value": "New Store"},
+                {"key": "address", "value": "456 Elm St"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Store",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId?description=Updated Store&address=789 Oak Ave",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId"],
+              "query": [
+                {"key": "description", "value": "Updated Store"},
+                {"key": "address", "value": "789 Oak Ave"}
+              ],
+              "variable": [{"key": "storeId", "value": "store1"}]
+            }
+          }
+        },
+        {
+          "name": "Delete Store",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId"],
+              "variable": [{"key": "storeId", "value": "store1"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Aisles",
+      "description": "Aisle management operations",
+      "item": [
+        {
+          "name": "Create Aisle",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId/aisles?aisleNumber=A1&name=Groceries&description=Food items&location=NORTH",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId", "aisles"],
+              "query": [
+                {"key": "aisleNumber", "value": "A1"},
+                {"key": "name", "value": "Groceries"},
+                {"key": "description", "value": "Food items"},
+                {"key": "location", "value": "NORTH"}
+              ],
+              "variable": [{"key": "storeId", "value": "store1"}]
+            }
+          }
+        },
+        {
+          "name": "Get Aisle",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId/aisles/:aisleNumber",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId", "aisles", ":aisleNumber"],
+              "variable": [
+                {"key": "storeId", "value": "store1"},
+                {"key": "aisleNumber", "value": "A1"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shelves",
+      "description": "Shelf management operations",
+      "item": [
+        {
+          "name": "Create Shelf",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId/aisles/:aisleNumber/shelves?shelfId=shelf1&name=Top Shelf&level=HIGH&description=Top shelf&temperature=AMBIENT",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId", "aisles", ":aisleNumber", "shelves"],
+              "query": [
+                {"key": "shelfId", "value": "shelf1"},
+                {"key": "name", "value": "Top Shelf"},
+                {"key": "level", "value": "HIGH"},
+                {"key": "description", "value": "Top shelf"},
+                {"key": "temperature", "value": "AMBIENT"}
+              ],
+              "variable": [
+                {"key": "storeId", "value": "store1"},
+                {"key": "aisleNumber", "value": "A1"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Shelf",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId/aisles/:aisleNumber/shelves/:shelfId",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId", "aisles", ":aisleNumber", "shelves", ":shelfId"],
+              "variable": [
+                {"key": "storeId", "value": "store1"},
+                {"key": "aisleNumber", "value": "A1"},
+                {"key": "shelfId", "value": "shelf1"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "description": "Product catalog management",
+      "item": [
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/products?productId=prod001&name=Milk&description=Whole milk&size=1gal&category=Dairy&price=3.99&temperature=REFRIGERATED",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                {"key": "productId", "value": "prod001"},
+                {"key": "name", "value": "Milk"},
+                {"key": "description", "value": "Whole milk"},
+                {"key": "size", "value": "1gal"},
+                {"key": "category", "value": "Dairy"},
+                {"key": "price", "value": "3.99"},
+                {"key": "temperature", "value": "REFRIGERATED"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/products/:productId",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", ":productId"],
+              "variable": [{"key": "productId", "value": "prod001"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "description": "Inventory management operations",
+      "item": [
+        {
+          "name": "Create Inventory",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/inventory?inventoryId=inv001&storeId=store1&aisleNumber=A1&shelfId=shelf1&capacity=100&count=50&productId=prod001&type=SHELF_INVENTORY",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory"],
+              "query": [
+                {"key": "inventoryId", "value": "inv001"},
+                {"key": "storeId", "value": "store1"},
+                {"key": "aisleNumber", "value": "A1"},
+                {"key": "shelfId", "value": "shelf1"},
+                {"key": "capacity", "value": "100"},
+                {"key": "count", "value": "50"},
+                {"key": "productId", "value": "prod001"},
+                {"key": "type", "value": "SHELF_INVENTORY"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Inventory",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/:inventoryId",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", ":inventoryId"],
+              "variable": [{"key": "inventoryId", "value": "inv001"}]
+            }
+          }
+        },
+        {
+          "name": "Update Inventory Count",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/:inventoryId?count=75",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", ":inventoryId"],
+              "query": [{"key": "count", "value": "75"}],
+              "variable": [{"key": "inventoryId", "value": "inv001"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "description": "Customer tracking and management",
+      "item": [
+        {
+          "name": "Register Customer",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/customers?customerId=cust001&firstName=John&lastName=Doe&type=REGISTERED&email=john.doe@example.com&address=123 Main St",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"],
+              "query": [
+                {"key": "customerId", "value": "cust001"},
+                {"key": "firstName", "value": "John"},
+                {"key": "lastName", "value": "Doe"},
+                {"key": "type", "value": "REGISTERED"},
+                {"key": "email", "value": "john.doe@example.com"},
+                {"key": "address", "value": "123 Main St"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/customers/:customerId",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", ":customerId"],
+              "variable": [{"key": "customerId", "value": "cust001"}]
+            }
+          }
+        },
+        {
+          "name": "Update Customer Location",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/customers/:customerId?storeId=store1&aisleNumber=A1",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", ":customerId"],
+              "query": [
+                {"key": "storeId", "value": "store1"},
+                {"key": "aisleNumber", "value": "A1"}
+              ],
+              "variable": [{"key": "customerId", "value": "cust001"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Baskets",
+      "description": "Shopping basket operations",
+      "item": [
+        {
+          "name": "Create Basket",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/baskets?basketId=basket001",
+              "host": ["{{baseUrl}}"],
+              "path": ["baskets"],
+              "query": [{"key": "basketId", "value": "basket001"}]
+            }
+          }
+        },
+        {
+          "name": "Get Basket",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/baskets/:basketId",
+              "host": ["{{baseUrl}}"],
+              "path": ["baskets", ":basketId"],
+              "variable": [{"key": "basketId", "value": "basket001"}]
+            }
+          }
+        },
+        {
+          "name": "Assign Basket to Customer",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/baskets/:basketId/assign?customerId=cust001",
+              "host": ["{{baseUrl}}"],
+              "path": ["baskets", ":basketId", "assign"],
+              "query": [{"key": "customerId", "value": "cust001"}],
+              "variable": [{"key": "basketId", "value": "basket001"}]
+            }
+          }
+        },
+        {
+          "name": "Add Product to Basket",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/baskets/:basketId/products?productId=prod001&count=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["baskets", ":basketId", "products"],
+              "query": [
+                {"key": "productId", "value": "prod001"},
+                {"key": "count", "value": "2"}
+              ],
+              "variable": [{"key": "basketId", "value": "basket001"}]
+            }
+          }
+        },
+        {
+          "name": "Remove Product from Basket",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/baskets/:basketId/products?productId=prod001&count=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["baskets", ":basketId", "products"],
+              "query": [
+                {"key": "productId", "value": "prod001"},
+                {"key": "count", "value": "1"}
+              ],
+              "variable": [{"key": "basketId", "value": "basket001"}]
+            }
+          }
+        },
+        {
+          "name": "Clear Basket",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/baskets/:basketId/clear",
+              "host": ["{{baseUrl}}"],
+              "path": ["baskets", ":basketId", "clear"],
+              "variable": [{"key": "basketId", "value": "basket001"}]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Basket",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/customers/:customerId/basket",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", ":customerId", "basket"],
+              "variable": [{"key": "customerId", "value": "cust001"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devices",
+      "description": "IoT device management (sensors and appliances)",
+      "item": [
+        {
+          "name": "Provision Device",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/stores/:storeId/devices?deviceId=device001&name=Entry Camera&deviceType=CAMERA&aisleNumber=A1",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores", ":storeId", "devices"],
+              "query": [
+                {"key": "deviceId", "value": "device001"},
+                {"key": "name", "value": "Entry Camera"},
+                {"key": "deviceType", "value": "CAMERA"},
+                {"key": "aisleNumber", "value": "A1"}
+              ],
+              "variable": [{"key": "storeId", "value": "store1"}]
+            }
+          }
+        },
+        {
+          "name": "Get Device",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/devices/:deviceId",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", ":deviceId"],
+              "variable": [{"key": "deviceId", "value": "device001"}]
+            }
+          }
+        },
+        {
+          "name": "Raise Device Event",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/devices/:deviceId/event?event=customer_detected",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", ":deviceId", "event"],
+              "query": [{"key": "event", "value": "customer_detected"}],
+              "variable": [{"key": "deviceId", "value": "device001"}]
+            }
+          }
+        },
+        {
+          "name": "Issue Device Command",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/devices/:deviceId/command?command=turn_on",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", ":deviceId", "command"],
+              "query": [{"key": "command", "value": "turn_on"}],
+              "variable": [{"key": "deviceId", "value": "device001"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User management and authentication",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by Email",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/users/:email",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":email"],
+              "variable": [{"key": "email", "value": "admin@store.com"}]
+            }
+          }
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/users?email=newuser@store.com&password=password123&name=New User",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                {"key": "email", "value": "newuser@store.com"},
+                {"key": "password", "value": "password123"},
+                {"key": "name", "value": "New User"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/users/:email?password=newpassword123&name=Updated Name",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":email"],
+              "query": [
+                {"key": "password", "value": "newpassword123"},
+                {"key": "name", "value": "Updated Name"}
+              ],
+              "variable": [{"key": "email", "value": "admin@store.com"}]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{baseUrl}}/users/:email",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":email"],
+              "variable": [{"key": "email", "value": "admin@store.com"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Complete Workflow Examples",
+      "description": "End-to-end workflow scenarios",
+      "item": [
+        {
+          "name": "1. Setup Store Infrastructure",
+          "item": [
+            {
+              "name": "1.1 Create Store",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/stores?storeId=store1&name=Downtown Store&address=123 Main St",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["stores"],
+                  "query": [
+                    {"key": "storeId", "value": "store1"},
+                    {"key": "name", "value": "Downtown Store"},
+                    {"key": "address", "value": "123 Main St"}
+                  ]
+                }
+              }
+            },
+            {
+              "name": "1.2 Create Aisle",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/stores/store1/aisles?aisleNumber=A1&name=Groceries&description=Food&location=NORTH",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["stores", "store1", "aisles"],
+                  "query": [
+                    {"key": "aisleNumber", "value": "A1"},
+                    {"key": "name", "value": "Groceries"},
+                    {"key": "description", "value": "Food"},
+                    {"key": "location", "value": "NORTH"}
+                  ]
+                }
+              }
+            },
+            {
+              "name": "1.3 Create Shelf",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/stores/store1/aisles/A1/shelves?shelfId=shelf1&name=Refrigerated&level=MEDIUM&temperature=REFRIGERATED",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["stores", "store1", "aisles", "A1", "shelves"],
+                  "query": [
+                    {"key": "shelfId", "value": "shelf1"},
+                    {"key": "name", "value": "Refrigerated"},
+                    {"key": "level", "value": "MEDIUM"},
+                    {"key": "temperature", "value": "REFRIGERATED"}
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Stock Products",
+          "item": [
+            {
+              "name": "2.1 Create Product",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/products?productId=prod001&name=Milk&description=Whole milk&size=1gal&category=Dairy&price=3.99&temperature=REFRIGERATED",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products"],
+                  "query": [
+                    {"key": "productId", "value": "prod001"},
+                    {"key": "name", "value": "Milk"},
+                    {"key": "description", "value": "Whole milk"},
+                    {"key": "size", "value": "1gal"},
+                    {"key": "category", "value": "Dairy"},
+                    {"key": "price", "value": "3.99"},
+                    {"key": "temperature", "value": "REFRIGERATED"}
+                  ]
+                }
+              }
+            },
+            {
+              "name": "2.2 Add Inventory",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/inventory?inventoryId=inv001&storeId=store1&aisleNumber=A1&shelfId=shelf1&capacity=100&count=50&productId=prod001&type=SHELF_INVENTORY",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["inventory"],
+                  "query": [
+                    {"key": "inventoryId", "value": "inv001"},
+                    {"key": "storeId", "value": "store1"},
+                    {"key": "aisleNumber", "value": "A1"},
+                    {"key": "shelfId", "value": "shelf1"},
+                    {"key": "capacity", "value": "100"},
+                    {"key": "count", "value": "50"},
+                    {"key": "productId", "value": "prod001"},
+                    {"key": "type", "value": "SHELF_INVENTORY"}
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Customer Shopping",
+          "item": [
+            {
+              "name": "3.1 Register Customer",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/customers?customerId=cust001&firstName=John&lastName=Doe&type=REGISTERED&email=john@example.com&address=123 Oak St",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"],
+                  "query": [
+                    {"key": "customerId", "value": "cust001"},
+                    {"key": "firstName", "value": "John"},
+                    {"key": "lastName", "value": "Doe"},
+                    {"key": "type", "value": "REGISTERED"},
+                    {"key": "email", "value": "john@example.com"},
+                    {"key": "address", "value": "123 Oak St"}
+                  ]
+                }
+              }
+            },
+            {
+              "name": "3.2 Update Customer Location",
+              "request": {
+                "method": "PUT",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/customers/cust001?storeId=store1&aisleNumber=A1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers", "cust001"],
+                  "query": [
+                    {"key": "storeId", "value": "store1"},
+                    {"key": "aisleNumber", "value": "A1"}
+                  ]
+                }
+              }
+            },
+            {
+              "name": "3.3 Create Basket",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/baskets?basketId=basket001",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["baskets"],
+                  "query": [{"key": "basketId", "value": "basket001"}]
+                }
+              }
+            },
+            {
+              "name": "3.4 Assign Basket to Customer",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/baskets/basket001/assign?customerId=cust001",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["baskets", "basket001", "assign"],
+                  "query": [{"key": "customerId", "value": "cust001"}]
+                }
+              }
+            },
+            {
+              "name": "3.5 Add Product to Basket",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Accept", "value": "application/json"}],
+                "url": {
+                  "raw": "{{baseUrl}}/baskets/basket001/products?productId=prod001&count=2",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["baskets", "basket001", "products"],
+                  "query": [
+                    {"key": "productId", "value": "prod001"},
+                    {"key": "count", "value": "2"}
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    }
+  ]
+}

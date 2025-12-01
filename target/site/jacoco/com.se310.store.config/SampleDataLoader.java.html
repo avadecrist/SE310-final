@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SampleDataLoader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.config</a> &gt; <span class="el_source">SampleDataLoader.java</span></div><h1>SampleDataLoader.java</h1><pre class="source lang-java linenums">package com.se310.store.config;
+
+import com.se310.store.model.*;
+import com.se310.store.service.AuthenticationService;
+import com.se310.store.service.StoreService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * SampleDataLoader - Comprehensive data loading utility for populating the Smart Store application.
+ *
+ * This class provides methods to load sample data for:
+ * - Users (admin, staff, customers)
+ * - Stores (multiple locations)
+ * - Aisles (organized by location)
+ * - Shelves (with temperature zones)
+ * - Products (various categories)
+ * - Inventory (stocked items)
+ * - Customers (registered and guests)
+ * - Baskets (shopping carts)
+ * - Devices (IoT sensors and appliances)
+ *
+ * Usage:
+ * - Application startup: Load production-like sample data
+ * - Testing: Load minimal or comprehensive test data
+ * - Demos: Load realistic demonstration data
+ *
+ * @author Sergey L. Sundukovskiy
+ * @version 1.0
+ */
+public class SampleDataLoader {
+
+<span class="nc" id="L33">    private static final Logger logger = LoggerFactory.getLogger(SampleDataLoader.class);</span>
+
+    private final StoreService storeService;
+    private final AuthenticationService authenticationService;
+
+    /**
+     * Constructor
+     */
+<span class="nc" id="L41">    public SampleDataLoader(StoreService storeService, AuthenticationService authenticationService) {</span>
+<span class="nc" id="L42">        this.storeService = storeService;</span>
+<span class="nc" id="L43">        this.authenticationService = authenticationService;</span>
+<span class="nc" id="L44">    }</span>
+
+    /**
+     * Load ALL sample data (comprehensive dataset)
+     * Suitable for: Application startup, demos, full integration testing
+     */
+    public void loadAllSampleData() {
+<span class="nc" id="L51">        logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L52">        logger.info(&quot;Loading comprehensive sample data...&quot;);</span>
+<span class="nc" id="L53">        logger.info(&quot;=&quot;.repeat(80));</span>
+
+        try {
+            // Load in dependency order
+<span class="nc" id="L57">            loadUsers();</span>
+<span class="nc" id="L58">            loadStores();</span>
+<span class="nc" id="L59">            loadAisles();</span>
+<span class="nc" id="L60">            loadShelves();</span>
+<span class="nc" id="L61">            loadProducts();</span>
+<span class="nc" id="L62">            loadInventory();</span>
+<span class="nc" id="L63">            loadCustomers();</span>
+<span class="nc" id="L64">            loadBaskets();</span>
+<span class="nc" id="L65">            loadDevices();</span>
+
+<span class="nc" id="L67">            logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L68">            logger.info(&quot;Sample data loaded successfully!&quot;);</span>
+<span class="nc" id="L69">            logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L70">        } catch (Exception e) {</span>
+<span class="nc" id="L71">            logger.error(&quot;Error loading sample data: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L72">            throw new RuntimeException(&quot;Failed to load sample data&quot;, e);</span>
+<span class="nc" id="L73">        }</span>
+<span class="nc" id="L74">    }</span>
+
+    /**
+     * Load minimal sample data (basic dataset)
+     * Suitable for: Unit testing, quick startup, minimal environment
+     */
+    public void loadMinimalSampleData() {
+<span class="nc" id="L81">        logger.info(&quot;Loading minimal sample data...&quot;);</span>
+
+        try {
+            // Load only essential data
+<span class="nc" id="L85">            loadBasicUsers();</span>
+<span class="nc" id="L86">            loadBasicStore();</span>
+<span class="nc" id="L87">            loadBasicProducts();</span>
+
+<span class="nc" id="L89">            logger.info(&quot;Minimal sample data loaded successfully&quot;);</span>
+<span class="nc" id="L90">        } catch (Exception e) {</span>
+<span class="nc" id="L91">            logger.error(&quot;Error loading minimal sample data: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L92">            throw new RuntimeException(&quot;Failed to load minimal sample data&quot;, e);</span>
+<span class="nc" id="L93">        }</span>
+<span class="nc" id="L94">    }</span>
+
+    // ==================== USER DATA ====================
+
+    /**
+     * Load comprehensive user dataset
+     */
+    public void loadUsers() {
+<span class="nc" id="L102">        logger.info(&quot;Loading users...&quot;);</span>
+
+        try {
+            // Administrator - credentials loaded from application.properties
+<span class="nc" id="L106">            authenticationService.registerUser(</span>
+<span class="nc" id="L107">                ConfigLoader.getAdminEmail(),</span>
+<span class="nc" id="L108">                ConfigLoader.getAdminPassword(),</span>
+<span class="nc" id="L109">                ConfigLoader.getAdminName(),</span>
+<span class="nc" id="L110">                UserRole.valueOf(ConfigLoader.getAdminRole())</span>
+            );
+
+            // Store Manager
+<span class="nc" id="L114">            authenticationService.registerUser(</span>
+                &quot;manager@store.com&quot;,
+                &quot;manager123&quot;,
+                &quot;Store Manager&quot;,
+                UserRole.MANAGER
+            );
+
+            // Staff members
+<span class="nc" id="L122">            authenticationService.registerUser(</span>
+                &quot;cashier@store.com&quot;,
+                &quot;cashier123&quot;,
+                &quot;John Cashier&quot;,
+                UserRole.USER
+            );
+
+<span class="nc" id="L129">            authenticationService.registerUser(</span>
+                &quot;stocker@store.com&quot;,
+                &quot;stocker123&quot;,
+                &quot;Jane Stocker&quot;,
+                UserRole.USER
+            );
+
+            // Customer accounts
+<span class="nc" id="L137">            authenticationService.registerUser(</span>
+                &quot;customer1@example.com&quot;,
+                &quot;customer123&quot;,
+                &quot;Alice User&quot;,
+                UserRole.USER
+            );
+
+<span class="nc" id="L144">            authenticationService.registerUser(</span>
+                &quot;customer2@example.com&quot;,
+                &quot;customer123&quot;,
+                &quot;Bob User&quot;,
+                UserRole.USER
+            );
+
+<span class="nc" id="L151">            logger.info(&quot;Loaded 6 users (1 admin, 1 manager, 4 regular users)&quot;);</span>
+<span class="nc" id="L152">        } catch (Exception e) {</span>
+<span class="nc" id="L153">            logger.warn(&quot;Some users may already exist: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L154">        }</span>
+<span class="nc" id="L155">    }</span>
+
+    /**
+     * Load basic users (minimal)
+     * All credentials loaded from application.properties
+     */
+    private void loadBasicUsers() {
+<span class="nc" id="L162">        logger.info(&quot;Loading basic users...&quot;);</span>
+
+        try {
+            // Admin user - from application.properties
+<span class="nc" id="L166">            authenticationService.registerUser(</span>
+<span class="nc" id="L167">                ConfigLoader.getAdminEmail(),</span>
+<span class="nc" id="L168">                ConfigLoader.getAdminPassword(),</span>
+<span class="nc" id="L169">                ConfigLoader.getAdminName(),</span>
+<span class="nc" id="L170">                UserRole.valueOf(ConfigLoader.getAdminRole())</span>
+            );
+
+            // Regular user - from application.properties
+<span class="nc" id="L174">            authenticationService.registerUser(</span>
+<span class="nc" id="L175">                ConfigLoader.getUserEmail(),</span>
+<span class="nc" id="L176">                ConfigLoader.getUserPassword(),</span>
+<span class="nc" id="L177">                ConfigLoader.getUserName(),</span>
+<span class="nc" id="L178">                UserRole.valueOf(ConfigLoader.getUserRole())</span>
+            );
+
+<span class="nc" id="L181">            logger.info(&quot;Loaded 2 basic users&quot;);</span>
+<span class="nc" id="L182">        } catch (Exception e) {</span>
+<span class="nc" id="L183">            logger.warn(&quot;Basic users may already exist: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L184">        }</span>
+<span class="nc" id="L185">    }</span>
+
+    // ==================== STORE DATA ====================
+
+    /**
+     * Load multiple stores
+     */
+    public void loadStores() {
+<span class="nc" id="L193">        logger.info(&quot;Loading stores...&quot;);</span>
+
+        try {
+            // Downtown flagship store
+<span class="nc" id="L197">            storeService.provisionStore(</span>
+                &quot;store1&quot;,
+                &quot;Downtown Flagship Store&quot;,
+                &quot;123 Main Street, Downtown, CA 90001&quot;,
+                &quot;&quot;
+            );
+
+            // Suburban location
+<span class="nc" id="L205">            storeService.provisionStore(</span>
+                &quot;store2&quot;,
+                &quot;Suburban Shopping Center&quot;,
+                &quot;456 Oak Avenue, Suburbia, CA 90002&quot;,
+                &quot;&quot;
+            );
+
+            // Express store
+<span class="nc" id="L213">            storeService.provisionStore(</span>
+                &quot;store3&quot;,
+                &quot;Express Mini-Mart&quot;,
+                &quot;789 Quick Lane, Metro, CA 90003&quot;,
+                &quot;&quot;
+            );
+
+<span class="nc" id="L220">            logger.info(&quot;Loaded 3 stores&quot;);</span>
+<span class="nc" id="L221">        } catch (Exception e) {</span>
+<span class="nc" id="L222">            logger.warn(&quot;Some stores may already exist: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L223">        }</span>
+<span class="nc" id="L224">    }</span>
+
+    /**
+     * Load basic store (minimal)
+     */
+    private void loadBasicStore() {
+<span class="nc" id="L230">        logger.info(&quot;Loading basic store...&quot;);</span>
+
+        try {
+<span class="nc" id="L233">            storeService.provisionStore(</span>
+                &quot;store1&quot;,
+                &quot;Test Store&quot;,
+                &quot;123 Test Street&quot;,
+                &quot;&quot;
+            );
+
+<span class="nc" id="L240">            logger.info(&quot;Loaded 1 basic store&quot;);</span>
+<span class="nc" id="L241">        } catch (Exception e) {</span>
+<span class="nc" id="L242">            logger.warn(&quot;Basic store may already exist: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L243">        }</span>
+<span class="nc" id="L244">    }</span>
+
+    // ==================== AISLE DATA ====================
+
+    /**
+     * Load aisles for all stores
+     */
+    public void loadAisles() {
+<span class="nc" id="L252">        logger.info(&quot;Loading aisles...&quot;);</span>
+
+        try {
+            // Store 1 - Downtown (comprehensive layout)
+<span class="nc" id="L256">            storeService.provisionAisle(&quot;store1&quot;, &quot;A1&quot;, &quot;Fresh Produce&quot;, &quot;Fruits and vegetables&quot;, AisleLocation.floor, &quot;&quot;);</span>
+<span class="nc" id="L257">            storeService.provisionAisle(&quot;store1&quot;, &quot;A2&quot;, &quot;Dairy &amp; Eggs&quot;, &quot;Refrigerated dairy products&quot;, AisleLocation.floor, &quot;&quot;);</span>
+<span class="nc" id="L258">            storeService.provisionAisle(&quot;store1&quot;, &quot;A3&quot;, &quot;Frozen Foods&quot;, &quot;Frozen meals and ice cream&quot;, AisleLocation.floor, &quot;&quot;);</span>
+<span class="nc" id="L259">            storeService.provisionAisle(&quot;store1&quot;, &quot;A4&quot;, &quot;Bakery&quot;, &quot;Fresh baked goods&quot;, AisleLocation.floor, &quot;&quot;);</span>
+<span class="nc" id="L260">            storeService.provisionAisle(&quot;store1&quot;, &quot;A5&quot;, &quot;Beverages&quot;, &quot;Drinks and refreshments&quot;, AisleLocation.floor, &quot;&quot;);</span>
+<span class="nc" id="L261">            storeService.provisionAisle(&quot;store1&quot;, &quot;A6&quot;, &quot;Snacks &amp; Candy&quot;, &quot;Chips and confections&quot;, AisleLocation.floor, &quot;&quot;);</span>
+
+            // Store 2 - Suburban (medium layout)
+<span class="nc" id="L264">            storeService.provisionAisle(&quot;store2&quot;, &quot;B1&quot;, &quot;Groceries&quot;, &quot;General groceries&quot;, AisleLocation.floor, &quot;&quot;);</span>
+<span class="nc" id="L265">            storeService.provisionAisle(&quot;store2&quot;, &quot;B2&quot;, &quot;Refrigerated&quot;, &quot;Cold items&quot;, AisleLocation.floor, &quot;&quot;);</span>
+<span class="nc" id="L266">            storeService.provisionAisle(&quot;store2&quot;, &quot;B3&quot;, &quot;Pantry&quot;, &quot;Dry goods&quot;, AisleLocation.store_room, &quot;&quot;);</span>
+
+            // Store 3 - Express (minimal layout)
+<span class="nc" id="L269">            storeService.provisionAisle(&quot;store3&quot;, &quot;C1&quot;, &quot;Quick Grab&quot;, &quot;Essentials&quot;, AisleLocation.floor, &quot;&quot;);</span>
+
+<span class="nc" id="L271">            logger.info(&quot;Loaded 10 aisles across 3 stores&quot;);</span>
+<span class="nc" id="L272">        } catch (Exception e) {</span>
+<span class="nc" id="L273">            logger.warn(&quot;Error loading aisles: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L274">        }</span>
+<span class="nc" id="L275">    }</span>
+
+    // ==================== SHELF DATA ====================
+
+    /**
+     * Load shelves in aisles
+     */
+    public void loadShelves() {
+<span class="nc" id="L283">        logger.info(&quot;Loading shelves...&quot;);</span>
+
+        try {
+            // Store 1, Aisle A1 - Fresh Produce
+<span class="nc" id="L287">            storeService.provisionShelf(&quot;store1&quot;, &quot;A1&quot;, &quot;A1-S1&quot;, &quot;Top Shelf&quot;, ShelfLevel.high, &quot;Premium fruits&quot;, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L288">            storeService.provisionShelf(&quot;store1&quot;, &quot;A1&quot;, &quot;A1-S2&quot;, &quot;Middle Shelf&quot;, ShelfLevel.medium, &quot;Regular produce&quot;, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L289">            storeService.provisionShelf(&quot;store1&quot;, &quot;A1&quot;, &quot;A1-S3&quot;, &quot;Bottom Shelf&quot;, ShelfLevel.low, &quot;Bulk items&quot;, Temperature.ambient, &quot;&quot;);</span>
+
+            // Store 1, Aisle A2 - Dairy (only one shelf per level allowed per aisle)
+<span class="nc" id="L292">            storeService.provisionShelf(&quot;store1&quot;, &quot;A2&quot;, &quot;A2-S1&quot;, &quot;Milk &amp; Cream&quot;, ShelfLevel.high, &quot;Dairy products&quot;, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L293">            storeService.provisionShelf(&quot;store1&quot;, &quot;A2&quot;, &quot;A2-S2&quot;, &quot;Cheese Section&quot;, ShelfLevel.medium, &quot;Cheese varieties&quot;, Temperature.refrigerated, &quot;&quot;);</span>
+
+            // Store 1, Aisle A3 - Frozen
+<span class="nc" id="L296">            storeService.provisionShelf(&quot;store1&quot;, &quot;A3&quot;, &quot;A3-S1&quot;, &quot;Frozen Meals&quot;, ShelfLevel.high, &quot;Ready meals&quot;, Temperature.frozen, &quot;&quot;);</span>
+<span class="nc" id="L297">            storeService.provisionShelf(&quot;store1&quot;, &quot;A3&quot;, &quot;A3-S2&quot;, &quot;Ice Cream&quot;, ShelfLevel.medium, &quot;Frozen desserts&quot;, Temperature.frozen, &quot;&quot;);</span>
+
+            // Store 1, Aisle A4 - Bakery
+<span class="nc" id="L300">            storeService.provisionShelf(&quot;store1&quot;, &quot;A4&quot;, &quot;A4-S1&quot;, &quot;Fresh Bread&quot;, ShelfLevel.medium, &quot;Daily bread&quot;, Temperature.ambient, &quot;&quot;);</span>
+
+            // Store 1, Aisle A5 - Beverages
+<span class="nc" id="L303">            storeService.provisionShelf(&quot;store1&quot;, &quot;A5&quot;, &quot;A5-S1&quot;, &quot;Soft Drinks&quot;, ShelfLevel.low, &quot;Carbonated drinks&quot;, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L304">            storeService.provisionShelf(&quot;store1&quot;, &quot;A5&quot;, &quot;A5-S2&quot;, &quot;Juices&quot;, ShelfLevel.high, &quot;Fruit juices&quot;, Temperature.refrigerated, &quot;&quot;);</span>
+
+            // Store 1, Aisle A6 - Snacks
+<span class="nc" id="L307">            storeService.provisionShelf(&quot;store1&quot;, &quot;A6&quot;, &quot;A6-S1&quot;, &quot;Chips &amp; Crisps&quot;, ShelfLevel.high, &quot;Savory snacks&quot;, Temperature.ambient, &quot;&quot;);</span>
+<span class="nc" id="L308">            storeService.provisionShelf(&quot;store1&quot;, &quot;A6&quot;, &quot;A6-S2&quot;, &quot;Candy&quot;, ShelfLevel.low, &quot;Confections&quot;, Temperature.ambient, &quot;&quot;);</span>
+
+            // Store 2 - Suburban
+<span class="nc" id="L311">            storeService.provisionShelf(&quot;store2&quot;, &quot;B1&quot;, &quot;B1-S1&quot;, &quot;General Shelf&quot;, ShelfLevel.medium, &quot;Various items&quot;, Temperature.ambient, &quot;&quot;);</span>
+<span class="nc" id="L312">            storeService.provisionShelf(&quot;store2&quot;, &quot;B2&quot;, &quot;B2-S1&quot;, &quot;Cold Shelf&quot;, ShelfLevel.high, &quot;Refrigerated items&quot;, Temperature.refrigerated, &quot;&quot;);</span>
+
+<span class="nc" id="L314">            logger.info(&quot;Loaded 14 shelves&quot;);</span>
+<span class="nc" id="L315">        } catch (Exception e) {</span>
+<span class="nc" id="L316">            logger.warn(&quot;Error loading shelves: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L317">        }</span>
+<span class="nc" id="L318">    }</span>
+
+    // ==================== PRODUCT DATA ====================
+
+    /**
+     * Load comprehensive product catalog
+     */
+    public void loadProducts() {
+<span class="nc" id="L326">        logger.info(&quot;Loading products...&quot;);</span>
+
+        try {
+            // Dairy products
+<span class="nc" id="L330">            storeService.provisionProduct(&quot;PROD001&quot;, &quot;Whole Milk&quot;, &quot;Fresh whole milk&quot;, &quot;1 gallon&quot;, &quot;Dairy&quot;, 3.99, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L331">            storeService.provisionProduct(&quot;PROD002&quot;, &quot;Cheddar Cheese&quot;, &quot;Aged cheddar&quot;, &quot;16 oz&quot;, &quot;Dairy&quot;, 5.49, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L332">            storeService.provisionProduct(&quot;PROD003&quot;, &quot;Greek Yogurt&quot;, &quot;Plain yogurt&quot;, &quot;32 oz&quot;, &quot;Dairy&quot;, 4.99, Temperature.refrigerated, &quot;&quot;);</span>
+
+            // Frozen foods
+<span class="nc" id="L335">            storeService.provisionProduct(&quot;PROD004&quot;, &quot;Frozen Pizza&quot;, &quot;Pepperoni pizza&quot;, &quot;Large&quot;, &quot;Frozen&quot;, 7.99, Temperature.frozen, &quot;&quot;);</span>
+<span class="nc" id="L336">            storeService.provisionProduct(&quot;PROD005&quot;, &quot;Ice Cream&quot;, &quot;Vanilla ice cream&quot;, &quot;1.5 quart&quot;, &quot;Frozen&quot;, 6.49, Temperature.frozen, &quot;&quot;);</span>
+<span class="nc" id="L337">            storeService.provisionProduct(&quot;PROD006&quot;, &quot;Frozen Vegetables&quot;, &quot;Mixed vegetables&quot;, &quot;16 oz&quot;, &quot;Frozen&quot;, 2.99, Temperature.frozen, &quot;&quot;);</span>
+
+            // Produce
+<span class="nc" id="L340">            storeService.provisionProduct(&quot;PROD007&quot;, &quot;Apples&quot;, &quot;Fresh red apples&quot;, &quot;per lb&quot;, &quot;Produce&quot;, 1.99, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L341">            storeService.provisionProduct(&quot;PROD008&quot;, &quot;Bananas&quot;, &quot;Fresh bananas&quot;, &quot;per lb&quot;, &quot;Produce&quot;, 0.59, Temperature.ambient, &quot;&quot;);</span>
+<span class="nc" id="L342">            storeService.provisionProduct(&quot;PROD009&quot;, &quot;Lettuce&quot;, &quot;Romaine lettuce&quot;, &quot;Head&quot;, &quot;Produce&quot;, 2.49, Temperature.refrigerated, &quot;&quot;);</span>
+
+            // Bakery
+<span class="nc" id="L345">            storeService.provisionProduct(&quot;PROD010&quot;, &quot;Whole Wheat Bread&quot;, &quot;Fresh baked&quot;, &quot;24 oz loaf&quot;, &quot;Bakery&quot;, 3.49, Temperature.ambient, &quot;&quot;);</span>
+<span class="nc" id="L346">            storeService.provisionProduct(&quot;PROD011&quot;, &quot;Bagels&quot;, &quot;Plain bagels&quot;, &quot;6 pack&quot;, &quot;Bakery&quot;, 4.29, Temperature.ambient, &quot;&quot;);</span>
+
+            // Beverages
+<span class="nc" id="L349">            storeService.provisionProduct(&quot;PROD012&quot;, &quot;Orange Juice&quot;, &quot;100% pure&quot;, &quot;64 oz&quot;, &quot;Beverages&quot;, 4.99, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L350">            storeService.provisionProduct(&quot;PROD013&quot;, &quot;Cola&quot;, &quot;Carbonated soda&quot;, &quot;2 liter&quot;, &quot;Beverages&quot;, 2.49, Temperature.refrigerated, &quot;&quot;);</span>
+<span class="nc" id="L351">            storeService.provisionProduct(&quot;PROD014&quot;, &quot;Bottled Water&quot;, &quot;Spring water&quot;, &quot;24 pack&quot;, &quot;Beverages&quot;, 5.99, Temperature.ambient, &quot;&quot;);</span>
+
+            // Snacks
+<span class="nc" id="L354">            storeService.provisionProduct(&quot;PROD015&quot;, &quot;Potato Chips&quot;, &quot;Classic flavor&quot;, &quot;10 oz&quot;, &quot;Snacks&quot;, 3.99, Temperature.ambient, &quot;&quot;);</span>
+<span class="nc" id="L355">            storeService.provisionProduct(&quot;PROD016&quot;, &quot;Chocolate Bar&quot;, &quot;Milk chocolate&quot;, &quot;1.5 oz&quot;, &quot;Candy&quot;, 1.49, Temperature.ambient, &quot;&quot;);</span>
+<span class="nc" id="L356">            storeService.provisionProduct(&quot;PROD017&quot;, &quot;Pretzels&quot;, &quot;Salted pretzels&quot;, &quot;16 oz&quot;, &quot;Snacks&quot;, 3.29, Temperature.ambient, &quot;&quot;);</span>
+
+<span class="nc" id="L358">            logger.info(&quot;Loaded 17 products&quot;);</span>
+<span class="nc" id="L359">        } catch (Exception e) {</span>
+<span class="nc" id="L360">            logger.warn(&quot;Error loading products: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L361">        }</span>
+<span class="nc" id="L362">    }</span>
+
+    /**
+     * Load basic products (minimal)
+     */
+    private void loadBasicProducts() {
+<span class="nc" id="L368">        logger.info(&quot;Loading basic products...&quot;);</span>
+
+        try {
+<span class="nc" id="L371">            storeService.provisionProduct(&quot;PROD001&quot;, &quot;Test Product 1&quot;, &quot;Test item&quot;, &quot;1 unit&quot;, &quot;Test&quot;, 9.99, Temperature.ambient, &quot;&quot;);</span>
+<span class="nc" id="L372">            storeService.provisionProduct(&quot;PROD002&quot;, &quot;Test Product 2&quot;, &quot;Test item&quot;, &quot;1 unit&quot;, &quot;Test&quot;, 14.99, Temperature.refrigerated, &quot;&quot;);</span>
+
+<span class="nc" id="L374">            logger.info(&quot;Loaded 2 basic products&quot;);</span>
+<span class="nc" id="L375">        } catch (Exception e) {</span>
+<span class="nc" id="L376">            logger.warn(&quot;Error loading basic products: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L377">        }</span>
+<span class="nc" id="L378">    }</span>
+
+    // ==================== INVENTORY DATA ====================
+
+    /**
+     * Load inventory records
+     */
+    public void loadInventory() {
+<span class="nc" id="L386">        logger.info(&quot;Loading inventory...&quot;);</span>
+
+        try {
+            // Store 1 - Dairy aisle inventory
+<span class="nc" id="L390">            storeService.provisionInventory(&quot;INV001&quot;, &quot;store1&quot;, &quot;A2&quot;, &quot;A2-S1&quot;, 100, 85, &quot;PROD001&quot;, InventoryType.standard, &quot;&quot;);</span>
+<span class="nc" id="L391">            storeService.provisionInventory(&quot;INV002&quot;, &quot;store1&quot;, &quot;A2&quot;, &quot;A2-S2&quot;, 50, 42, &quot;PROD002&quot;, InventoryType.standard, &quot;&quot;);</span>
+<span class="nc" id="L392">            storeService.provisionInventory(&quot;INV003&quot;, &quot;store1&quot;, &quot;A2&quot;, &quot;A2-S1&quot;, 60, 55, &quot;PROD003&quot;, InventoryType.standard, &quot;&quot;);</span>
+
+            // Store 1 - Frozen aisle inventory
+<span class="nc" id="L395">            storeService.provisionInventory(&quot;INV004&quot;, &quot;store1&quot;, &quot;A3&quot;, &quot;A3-S1&quot;, 40, 28, &quot;PROD004&quot;, InventoryType.standard, &quot;&quot;);</span>
+<span class="nc" id="L396">            storeService.provisionInventory(&quot;INV005&quot;, &quot;store1&quot;, &quot;A3&quot;, &quot;A3-S2&quot;, 80, 65, &quot;PROD005&quot;, InventoryType.standard, &quot;&quot;);</span>
+<span class="nc" id="L397">            storeService.provisionInventory(&quot;INV006&quot;, &quot;store1&quot;, &quot;A3&quot;, &quot;A3-S1&quot;, 100, 90, &quot;PROD006&quot;, InventoryType.standard, &quot;&quot;);</span>
+
+            // Store 1 - Produce inventory
+<span class="nc" id="L400">            storeService.provisionInventory(&quot;INV007&quot;, &quot;store1&quot;, &quot;A1&quot;, &quot;A1-S2&quot;, 200, 150, &quot;PROD007&quot;, InventoryType.standard, &quot;&quot;);</span>
+<span class="nc" id="L401">            storeService.provisionInventory(&quot;INV008&quot;, &quot;store1&quot;, &quot;A1&quot;, &quot;A1-S3&quot;, 300, 275, &quot;PROD008&quot;, InventoryType.standard, &quot;&quot;);</span>
+
+            // Store 1 - Bakery inventory
+<span class="nc" id="L404">            storeService.provisionInventory(&quot;INV009&quot;, &quot;store1&quot;, &quot;A4&quot;, &quot;A4-S1&quot;, 50, 35, &quot;PROD010&quot;, InventoryType.standard, &quot;&quot;);</span>
+
+            // Store 1 - Beverages inventory
+<span class="nc" id="L407">            storeService.provisionInventory(&quot;INV010&quot;, &quot;store1&quot;, &quot;A5&quot;, &quot;A5-S2&quot;, 100, 78, &quot;PROD012&quot;, InventoryType.standard, &quot;&quot;);</span>
+<span class="nc" id="L408">            storeService.provisionInventory(&quot;INV011&quot;, &quot;store1&quot;, &quot;A5&quot;, &quot;A5-S1&quot;, 150, 120, &quot;PROD013&quot;, InventoryType.standard, &quot;&quot;);</span>
+
+            // Store 1 - Snacks inventory
+<span class="nc" id="L411">            storeService.provisionInventory(&quot;INV012&quot;, &quot;store1&quot;, &quot;A6&quot;, &quot;A6-S1&quot;, 80, 65, &quot;PROD015&quot;, InventoryType.standard, &quot;&quot;);</span>
+<span class="nc" id="L412">            storeService.provisionInventory(&quot;INV013&quot;, &quot;store1&quot;, &quot;A6&quot;, &quot;A6-S2&quot;, 200, 180, &quot;PROD016&quot;, InventoryType.standard, &quot;&quot;);</span>
+
+<span class="nc" id="L414">            logger.info(&quot;Loaded 13 inventory records&quot;);</span>
+<span class="nc" id="L415">        } catch (Exception e) {</span>
+<span class="nc" id="L416">            logger.warn(&quot;Error loading inventory: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L417">        }</span>
+<span class="nc" id="L418">    }</span>
+
+    // ==================== CUSTOMER DATA ====================
+
+    /**
+     * Load customer data
+     */
+    public void loadCustomers() {
+<span class="nc" id="L426">        logger.info(&quot;Loading customers...&quot;);</span>
+
+        try {
+            // Registered customers
+<span class="nc" id="L430">            storeService.provisionCustomer(</span>
+                &quot;CUST001&quot;,
+                &quot;Alice&quot;,
+                &quot;Johnson&quot;,
+                CustomerType.registered,
+                &quot;alice.johnson@example.com&quot;,
+                &quot;123 Elm Street, City, CA 90001&quot;,
+                &quot;&quot;
+            );
+
+<span class="nc" id="L440">            storeService.provisionCustomer(</span>
+                &quot;CUST002&quot;,
+                &quot;Bob&quot;,
+                &quot;Smith&quot;,
+                CustomerType.registered,
+                &quot;bob.smith@example.com&quot;,
+                &quot;456 Maple Avenue, City, CA 90002&quot;,
+                &quot;&quot;
+            );
+
+<span class="nc" id="L450">            storeService.provisionCustomer(</span>
+                &quot;CUST003&quot;,
+                &quot;Carol&quot;,
+                &quot;Williams&quot;,
+                CustomerType.registered,
+                &quot;carol.williams@example.com&quot;,
+                &quot;789 Oak Boulevard, City, CA 90003&quot;,
+                &quot;&quot;
+            );
+
+            // Guest customers
+<span class="nc" id="L461">            storeService.provisionCustomer(</span>
+                &quot;GUEST001&quot;,
+                &quot;Guest&quot;,
+                &quot;User1&quot;,
+                CustomerType.guest,
+                &quot;&quot;,
+                &quot;&quot;,
+                &quot;&quot;
+            );
+
+<span class="nc" id="L471">            logger.info(&quot;Loaded 4 customers (3 registered, 1 guest)&quot;);</span>
+<span class="nc" id="L472">        } catch (Exception e) {</span>
+<span class="nc" id="L473">            logger.warn(&quot;Error loading customers: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L474">        }</span>
+<span class="nc" id="L475">    }</span>
+
+    // ==================== BASKET DATA ====================
+
+    /**
+     * Load shopping baskets
+     */
+    public void loadBaskets() {
+<span class="nc" id="L483">        logger.info(&quot;Loading baskets...&quot;);</span>
+
+        try {
+            // Create baskets
+<span class="nc" id="L487">            storeService.provisionBasket(&quot;BASKET001&quot;, &quot;&quot;);</span>
+<span class="nc" id="L488">            storeService.provisionBasket(&quot;BASKET002&quot;, &quot;&quot;);</span>
+<span class="nc" id="L489">            storeService.provisionBasket(&quot;BASKET003&quot;, &quot;&quot;);</span>
+
+            // Update customers to be in store and assign baskets
+<span class="nc" id="L492">            storeService.updateCustomer(&quot;CUST001&quot;, &quot;store1&quot;, &quot;A2&quot;, &quot;&quot;);</span>
+<span class="nc" id="L493">            storeService.assignCustomerBasket(&quot;CUST001&quot;, &quot;BASKET001&quot;, &quot;&quot;);</span>
+
+<span class="nc" id="L495">            storeService.updateCustomer(&quot;CUST002&quot;, &quot;store1&quot;, &quot;A5&quot;, &quot;&quot;);</span>
+<span class="nc" id="L496">            storeService.assignCustomerBasket(&quot;CUST002&quot;, &quot;BASKET002&quot;, &quot;&quot;);</span>
+
+            // Add items to BASKET001 (CUST001)
+            // Customer is in A2 (Dairy), add dairy products
+<span class="nc" id="L500">            storeService.addBasketProduct(&quot;BASKET001&quot;, &quot;PROD001&quot;, 2, &quot;&quot;); // 2x Milk (in A2)</span>
+<span class="nc" id="L501">            storeService.addBasketProduct(&quot;BASKET001&quot;, &quot;PROD002&quot;, 1, &quot;&quot;); // 1x Cheese (in A2)</span>
+
+            // Move customer to A1 (Produce) to add apples
+<span class="nc" id="L504">            storeService.updateCustomer(&quot;CUST001&quot;, &quot;store1&quot;, &quot;A1&quot;, &quot;&quot;);</span>
+<span class="nc" id="L505">            storeService.addBasketProduct(&quot;BASKET001&quot;, &quot;PROD007&quot;, 5, &quot;&quot;); // 5 lbs Apples (in A1)</span>
+
+            // Add items to BASKET002 (CUST002)
+            // Customer is already in A5 (Beverages), add beverage products
+<span class="nc" id="L509">            storeService.addBasketProduct(&quot;BASKET002&quot;, &quot;PROD012&quot;, 1, &quot;&quot;); // 1x Orange Juice (in A5)</span>
+<span class="nc" id="L510">            storeService.addBasketProduct(&quot;BASKET002&quot;, &quot;PROD013&quot;, 2, &quot;&quot;); // 2x Cola (in A5)</span>
+
+<span class="nc" id="L512">            logger.info(&quot;Loaded 3 baskets with items for 2 customers&quot;);</span>
+<span class="nc" id="L513">        } catch (Exception e) {</span>
+<span class="nc" id="L514">            logger.warn(&quot;Error loading baskets: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L515">        }</span>
+<span class="nc" id="L516">    }</span>
+
+    // ==================== DEVICE DATA ====================
+
+    /**
+     * Load IoT devices (sensors and appliances)
+     */
+    public void loadDevices() {
+<span class="nc" id="L524">        logger.info(&quot;Loading IoT devices...&quot;);</span>
+
+        try {
+            // Store 1 devices
+            // Sensors
+<span class="nc" id="L529">            storeService.provisionDevice(&quot;DEV001&quot;, &quot;Entrance Camera&quot;, &quot;camera&quot;, &quot;store1&quot;, &quot;A1&quot;, &quot;&quot;);</span>
+<span class="nc" id="L530">            storeService.provisionDevice(&quot;DEV002&quot;, &quot;Aisle Microphone&quot;, &quot;microphone&quot;, &quot;store1&quot;, &quot;A2&quot;, &quot;&quot;);</span>
+<span class="nc" id="L531">            storeService.provisionDevice(&quot;DEV003&quot;, &quot;Entry Turnstile&quot;, &quot;turnstile&quot;, &quot;store1&quot;, &quot;A1&quot;, &quot;&quot;);</span>
+
+            // Appliances
+<span class="nc" id="L534">            storeService.provisionDevice(&quot;DEV004&quot;, &quot;Cleaning Robot&quot;, &quot;robot&quot;, &quot;store1&quot;, &quot;A6&quot;, &quot;&quot;);</span>
+<span class="nc" id="L535">            storeService.provisionDevice(&quot;DEV005&quot;, &quot;Announcement Speaker&quot;, &quot;speaker&quot;, &quot;store1&quot;, &quot;A5&quot;, &quot;&quot;);</span>
+
+            // Store 2 devices
+<span class="nc" id="L538">            storeService.provisionDevice(&quot;DEV006&quot;, &quot;Security Camera&quot;, &quot;camera&quot;, &quot;store2&quot;, &quot;B1&quot;, &quot;&quot;);</span>
+<span class="nc" id="L539">            storeService.provisionDevice(&quot;DEV007&quot;, &quot;PA System&quot;, &quot;speaker&quot;, &quot;store2&quot;, &quot;B2&quot;, &quot;&quot;);</span>
+
+<span class="nc" id="L541">            logger.info(&quot;Loaded 7 IoT devices (3 sensors, 4 appliances)&quot;);</span>
+<span class="nc" id="L542">        } catch (Exception e) {</span>
+<span class="nc" id="L543">            logger.warn(&quot;Error loading devices: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L544">        }</span>
+<span class="nc" id="L545">    }</span>
+
+    // ==================== SUMMARY ====================
+
+    /**
+     * Print summary of loaded data
+     */
+    public void printDataSummary() {
+<span class="nc" id="L553">        logger.info(&quot;&quot;);</span>
+<span class="nc" id="L554">        logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L555">        logger.info(&quot;SAMPLE DATA SUMMARY&quot;);</span>
+<span class="nc" id="L556">        logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L557">        logger.info(&quot;Users:      6 (admin, manager, staff, customers)&quot;);</span>
+<span class="nc" id="L558">        logger.info(&quot;Stores:     3 (downtown, suburban, express)&quot;);</span>
+<span class="nc" id="L559">        logger.info(&quot;Aisles:     10 across all stores&quot;);</span>
+<span class="nc" id="L560">        logger.info(&quot;Shelves:    14 with various temperature zones&quot;);</span>
+<span class="nc" id="L561">        logger.info(&quot;Products:   17 across multiple categories&quot;);</span>
+<span class="nc" id="L562">        logger.info(&quot;Inventory:  13 stocked items&quot;);</span>
+<span class="nc" id="L563">        logger.info(&quot;Customers:  4 (3 registered, 1 guest)&quot;);</span>
+<span class="nc" id="L564">        logger.info(&quot;Baskets:    3 (2 with items)&quot;);</span>
+<span class="nc" id="L565">        logger.info(&quot;Devices:    7 IoT devices&quot;);</span>
+<span class="nc" id="L566">        logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L567">        logger.info(&quot;Available Test Credentials:&quot;);</span>
+<span class="nc" id="L568">        logger.info(&quot;  Admin:    {} / {}&quot;, ConfigLoader.getAdminEmail(), ConfigLoader.getAdminPassword());</span>
+<span class="nc" id="L569">        logger.info(&quot;  Manager:  manager@store.com / manager123&quot;);</span>
+<span class="nc" id="L570">        logger.info(&quot;  Customer: customer1@example.com / customer123&quot;);</span>
+<span class="nc" id="L571">        logger.info(&quot;=&quot;.repeat(80));</span>
+<span class="nc" id="L572">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

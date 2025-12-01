@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoreManagementCLIClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.cli</a> &gt; <span class="el_source">StoreManagementCLIClient.java</span></div><h1>StoreManagementCLIClient.java</h1><pre class="source lang-java linenums">package com.se310.store.cli;
+
+import com.se310.store.config.ConfigLoader;
+import com.se310.store.data.DataManager;
+import com.se310.store.model.*;
+import com.se310.store.repository.UserRepository;
+import com.se310.store.service.AuthenticationService;
+import com.se310.store.service.StoreService;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.Scanner;
+
+/**
+ * StoreManagementCLIClient - Command-line interface for Store Management System
+ *
+ * This CLI client provides a hybrid interface:
+ * - Authentication uses AuthenticationService (direct service access)
+ * - Store and User operations use REST API (via HTTP)
+ * - All other operations (Products, Customers, etc.) use StoreService directly
+ *
+ * This demonstrates both API-based and direct service access patterns.
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-11
+ */
+<span class="nc" id="L34">public class StoreManagementCLIClient {</span>
+
+    //TODO: Implement View for Store operations, part of the MVC Pattern
+
+<span class="nc" id="L38">    private static final String BASE_URL = ConfigLoader.getApiBaseUrl();</span>
+<span class="nc" id="L39">    private static String authHeader = null;</span>
+<span class="nc" id="L40">    private static final Scanner scanner = new Scanner(System.in);</span>
+
+    // Direct service access
+    private static StoreService storeService;
+    private static AuthenticationService authenticationService;
+
+    public static void main(String[] args) {
+<span class="nc" id="L47">        System.out.println(&quot;===============================================&quot;);</span>
+<span class="nc" id="L48">        System.out.println(&quot;|  Smart Store Management CLI Client        |&quot;);</span>
+<span class="nc" id="L49">        System.out.println(&quot;|  (Hybrid: API + Direct Service Access)    |&quot;);</span>
+<span class="nc" id="L50">        System.out.println(&quot;===============================================&quot;);</span>
+<span class="nc" id="L51">        System.out.println();</span>
+
+        // Initialize local services
+<span class="nc" id="L54">        initializeServices();</span>
+
+        // Authenticate user using AuthenticationService
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (!authenticate()) {</span>
+<span class="nc" id="L58">            System.out.println(&quot;Authentication failed. Exiting...&quot;);</span>
+<span class="nc" id="L59">            return;</span>
+        }
+
+        // Main menu loop
+<span class="nc" id="L63">        boolean running = true;</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        while (running) {</span>
+<span class="nc" id="L65">            printMainMenu();</span>
+<span class="nc" id="L66">            String choice = scanner.nextLine().trim();</span>
+
+<span class="nc bnc" id="L68" title="All 8 branches missed.">            switch (choice) {</span>
+                case &quot;1&quot;:
+<span class="nc" id="L70">                    manageStores();</span>
+<span class="nc" id="L71">                    break;</span>
+                case &quot;2&quot;:
+<span class="nc" id="L73">                    manageUsers();</span>
+<span class="nc" id="L74">                    break;</span>
+                case &quot;3&quot;:
+<span class="nc" id="L76">                    manageProducts();</span>
+<span class="nc" id="L77">                    break;</span>
+                case &quot;4&quot;:
+<span class="nc" id="L79">                    manageCustomers();</span>
+<span class="nc" id="L80">                    break;</span>
+                case &quot;5&quot;:
+<span class="nc" id="L82">                    viewDocumentation();</span>
+<span class="nc" id="L83">                    break;</span>
+                case &quot;6&quot;:
+<span class="nc" id="L85">                    logout();</span>
+<span class="nc" id="L86">                    break;</span>
+                case &quot;0&quot;:
+<span class="nc" id="L88">                    running = false;</span>
+<span class="nc" id="L89">                    System.out.println(&quot;Goodbye!&quot;);</span>
+<span class="nc" id="L90">                    break;</span>
+                default:
+<span class="nc" id="L92">                    System.out.println(&quot;Invalid choice. Please try again.&quot;);</span>
+            }
+<span class="nc" id="L94">        }</span>
+
+<span class="nc" id="L96">        scanner.close();</span>
+<span class="nc" id="L97">    }</span>
+
+    /**
+     * Initialize local services for direct access
+     */
+    private static void initializeServices() {
+        try {
+            // Initialize DataManager and repositories
+<span class="nc" id="L105">            DataManager dataManager = DataManager.getInstance();</span>
+<span class="nc" id="L106">            UserRepository userRepository = new UserRepository(dataManager);</span>
+
+            // Initialize services
+<span class="nc" id="L109">            storeService = new StoreService();</span>
+<span class="nc" id="L110">            authenticationService = new AuthenticationService(userRepository);</span>
+
+<span class="nc" id="L112">            System.out.println(&quot;[OK] Local services initialized&quot;);</span>
+<span class="nc" id="L113">            System.out.println();</span>
+<span class="nc" id="L114">        } catch (Exception e) {</span>
+<span class="nc" id="L115">            System.err.println(&quot;Error initializing services: &quot; + e.getMessage());</span>
+<span class="nc" id="L116">            System.exit(1);</span>
+<span class="nc" id="L117">        }</span>
+<span class="nc" id="L118">    }</span>
+
+    /**
+     * Authenticate user using AuthenticationService
+     */
+    private static boolean authenticate() {
+<span class="nc" id="L124">        System.out.println(&quot;Please login&quot;);</span>
+<span class="nc" id="L125">        System.out.print(&quot;Email: &quot;);</span>
+<span class="nc" id="L126">        String email = scanner.nextLine().trim();</span>
+<span class="nc" id="L127">        System.out.print(&quot;Password: &quot;);</span>
+<span class="nc" id="L128">        String password = scanner.nextLine().trim();</span>
+
+        // Create Basic Auth header for both service and API usage
+<span class="nc" id="L131">        String credentials = email + &quot;:&quot; + password;</span>
+<span class="nc" id="L132">        authHeader = &quot;Basic &quot; + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));</span>
+
+        // Authenticate using AuthenticationService
+        try {
+<span class="nc" id="L136">            Optional&lt;User&gt; userOpt = authenticationService.authenticateBasic(authHeader);</span>
+
+<span class="nc bnc" id="L138" title="All 2 branches missed.">            if (userOpt.isPresent()) {</span>
+<span class="nc" id="L139">                User user = userOpt.get();</span>
+<span class="nc" id="L140">                System.out.println(&quot;[OK] Authentication successful!&quot;);</span>
+<span class="nc" id="L141">                System.out.println(&quot;  Welcome, &quot; + user.getName() + &quot; (&quot; + user.getRole() + &quot;)&quot;);</span>
+<span class="nc" id="L142">                System.out.println();</span>
+<span class="nc" id="L143">                return true;</span>
+            } else {
+<span class="nc" id="L145">                System.out.println(&quot;[X] Authentication failed: Invalid credentials&quot;);</span>
+<span class="nc" id="L146">                return false;</span>
+            }
+<span class="nc" id="L148">        } catch (Exception e) {</span>
+<span class="nc" id="L149">            System.out.println(&quot;[X] Authentication failed: &quot; + e.getMessage());</span>
+<span class="nc" id="L150">            return false;</span>
+        }
+    }
+
+    private static void printMainMenu() {
+<span class="nc" id="L155">        System.out.println(&quot;\n===============================================&quot;);</span>
+<span class="nc" id="L156">        System.out.println(&quot;|            MAIN MENU                      |&quot;);</span>
+<span class="nc" id="L157">        System.out.println(&quot;===============================================&quot;);</span>
+<span class="nc" id="L158">        System.out.println(&quot;|  1. Manage Stores (via API)               |&quot;);</span>
+<span class="nc" id="L159">        System.out.println(&quot;|  2. Manage Users (via API)                |&quot;);</span>
+<span class="nc" id="L160">        System.out.println(&quot;|  3. Manage Products (via Service)         |&quot;);</span>
+<span class="nc" id="L161">        System.out.println(&quot;|  4. Manage Customers (via Service)        |&quot;);</span>
+<span class="nc" id="L162">        System.out.println(&quot;|  5. View API Documentation                |&quot;);</span>
+<span class="nc" id="L163">        System.out.println(&quot;|  6. Logout (Switch User)                  |&quot;);</span>
+<span class="nc" id="L164">        System.out.println(&quot;|  0. Exit                                  |&quot;);</span>
+<span class="nc" id="L165">        System.out.println(&quot;===============================================&quot;);</span>
+<span class="nc" id="L166">        System.out.print(&quot;Enter your choice: &quot;);</span>
+<span class="nc" id="L167">    }</span>
+
+    /**
+     * Store operations - Uses REST API
+     */
+    private static void manageStores() {
+<span class="nc" id="L173">        System.out.println(&quot;\n=== Store Management (via REST API) ===&quot;);</span>
+<span class="nc" id="L174">        System.out.println(&quot;1. List all stores&quot;);</span>
+<span class="nc" id="L175">        System.out.println(&quot;2. View store details&quot;);</span>
+<span class="nc" id="L176">        System.out.println(&quot;3. Create new store&quot;);</span>
+<span class="nc" id="L177">        System.out.println(&quot;4. Update store&quot;);</span>
+<span class="nc" id="L178">        System.out.println(&quot;5. Delete store&quot;);</span>
+<span class="nc" id="L179">        System.out.println(&quot;0. Back to main menu&quot;);</span>
+<span class="nc" id="L180">        System.out.print(&quot;Enter your choice: &quot;);</span>
+
+<span class="nc" id="L182">        String choice = scanner.nextLine().trim();</span>
+<span class="nc" id="L183">    }</span>
+
+    /**
+     * User operations - Uses REST API
+     */
+    private static void manageUsers() {
+<span class="nc" id="L189">        System.out.println(&quot;\n=== User Management (via REST API) ===&quot;);</span>
+<span class="nc" id="L190">        System.out.println(&quot;1. List all users&quot;);</span>
+<span class="nc" id="L191">        System.out.println(&quot;2. View user details&quot;);</span>
+<span class="nc" id="L192">        System.out.println(&quot;3. Register new user&quot;);</span>
+<span class="nc" id="L193">        System.out.println(&quot;0. Back to main menu&quot;);</span>
+<span class="nc" id="L194">        System.out.print(&quot;Enter your choice: &quot;);</span>
+
+<span class="nc" id="L196">        String choice = scanner.nextLine().trim();</span>
+
+<span class="nc" id="L198">    }</span>
+
+    /**
+     * Product operations - Uses StoreService directly
+     */
+    private static void manageProducts() {
+<span class="nc" id="L204">        System.out.println(&quot;\n=== Product Management (via StoreService) ===&quot;);</span>
+<span class="nc" id="L205">        System.out.println(&quot;1. View product&quot;);</span>
+<span class="nc" id="L206">        System.out.println(&quot;2. Create new product&quot;);</span>
+<span class="nc" id="L207">        System.out.println(&quot;0. Back to main menu&quot;);</span>
+<span class="nc" id="L208">        System.out.print(&quot;Enter your choice: &quot;);</span>
+
+<span class="nc" id="L210">        String choice = scanner.nextLine().trim();</span>
+
+<span class="nc" id="L212">    }</span>
+
+    /**
+     * Customer operations - Uses StoreService directly
+     */
+    private static void manageCustomers() {
+<span class="nc" id="L218">        System.out.println(&quot;\n=== Customer Management (via StoreService) ===&quot;);</span>
+<span class="nc" id="L219">        System.out.println(&quot;1. View customer&quot;);</span>
+<span class="nc" id="L220">        System.out.println(&quot;2. Register new customer&quot;);</span>
+<span class="nc" id="L221">        System.out.println(&quot;0. Back to main menu&quot;);</span>
+<span class="nc" id="L222">        System.out.print(&quot;Enter your choice: &quot;);</span>
+
+<span class="nc" id="L224">        String choice = scanner.nextLine().trim();</span>
+
+<span class="nc" id="L226">    }</span>
+
+    private static void viewDocumentation() {
+<span class="nc" id="L229">        System.out.println(&quot;\n=== API Documentation ===&quot;);</span>
+<span class="nc" id="L230">        int port = ConfigLoader.getServerPort();</span>
+<span class="nc" id="L231">        System.out.println(&quot;API Documentation URL: http://localhost:&quot; + port + &quot;/api/docs&quot;);</span>
+<span class="nc" id="L232">        System.out.println(&quot;OpenAPI Spec: http://localhost:&quot; + port + &quot;/api/docs/openapi.yaml&quot;);</span>
+<span class="nc" id="L233">        System.out.println(&quot;\nArchitecture:&quot;);</span>
+<span class="nc" id="L234">        System.out.println(&quot;  - Store/User operations: REST API (HTTP)&quot;);</span>
+<span class="nc" id="L235">        System.out.println(&quot;  - Other operations: Direct StoreService access&quot;);</span>
+<span class="nc" id="L236">        System.out.println(&quot;\nPress Enter to continue...&quot;);</span>
+<span class="nc" id="L237">        scanner.nextLine();</span>
+<span class="nc" id="L238">    }</span>
+
+    /**
+     * Logout and switch to a different user
+     */
+    private static void logout() {
+<span class="nc" id="L244">        System.out.println(&quot;\n=== Logout ===&quot;);</span>
+<span class="nc" id="L245">        System.out.println(&quot;Logging out current user...&quot;);</span>
+
+        // Clear authentication
+<span class="nc" id="L248">        authHeader = null;</span>
+
+<span class="nc" id="L250">        System.out.println(&quot;[OK] Logged out successfully\n&quot;);</span>
+
+        // Re-authenticate with new credentials
+<span class="nc bnc" id="L253" title="All 2 branches missed.">        while (!authenticate()) {</span>
+<span class="nc" id="L254">            System.out.println(&quot;\nAuthentication failed. Please try again.\n&quot;);</span>
+        }
+<span class="nc" id="L256">    }</span>
+
+    /**
+     * Send HTTP request to REST API (for Store and User operations)
+     */
+    private static String sendRequest(String method, String endpoint, String body) throws Exception {
+<span class="nc" id="L262">        URL url = new URL(BASE_URL + endpoint);</span>
+<span class="nc" id="L263">        HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L264">        conn.setRequestMethod(method);</span>
+<span class="nc" id="L265">        conn.setRequestProperty(&quot;Authorization&quot;, authHeader);</span>
+<span class="nc" id="L266">        conn.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);</span>
+
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (body != null) {</span>
+<span class="nc" id="L269">            conn.setDoOutput(true);</span>
+<span class="nc" id="L270">            try (OutputStream os = conn.getOutputStream()) {</span>
+<span class="nc" id="L271">                byte[] input = body.getBytes(StandardCharsets.UTF_8);</span>
+<span class="nc" id="L272">                os.write(input, 0, input.length);</span>
+            }
+        }
+
+<span class="nc" id="L276">        StringBuilder response = getStringBuilder(conn);</span>
+
+<span class="nc" id="L278">        return response.toString();</span>
+    }
+
+    private static StringBuilder getStringBuilder(HttpURLConnection conn) throws Exception {
+<span class="nc" id="L282">        int responseCode = conn.getResponseCode();</span>
+
+        BufferedReader reader;
+<span class="nc bnc" id="L285" title="All 4 branches missed.">        if (responseCode &gt;= 200 &amp;&amp; responseCode &lt; 300) {</span>
+<span class="nc" id="L286">            reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));</span>
+        } else {
+<span class="nc" id="L288">            reader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8));</span>
+        }
+
+<span class="nc" id="L291">        StringBuilder response = new StringBuilder();</span>
+        String line;
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        while ((line = reader.readLine()) != null) {</span>
+<span class="nc" id="L294">            response.append(line);</span>
+        }
+<span class="nc" id="L296">        reader.close();</span>
+
+<span class="nc bnc" id="L298" title="All 4 branches missed.">        if (responseCode &lt; 200 || responseCode &gt;= 300) {</span>
+<span class="nc" id="L299">            throw new Exception(&quot;HTTP &quot; + responseCode + &quot;: &quot; + response);</span>
+        }
+<span class="nc" id="L301">        return response;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

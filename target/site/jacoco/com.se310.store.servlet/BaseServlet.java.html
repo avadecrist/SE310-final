@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BaseServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.servlet</a> &gt; <span class="el_source">BaseServlet.java</span></div><h1>BaseServlet.java</h1><pre class="source lang-java linenums">package com.se310.store.servlet;
+
+import com.se310.store.dto.JsonHelper;
+import com.se310.store.dto.JsonSerializable;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+/**
+ * Base servlet providing common functionality for all API servlets.
+ *
+ * This class demonstrates the Template Method Pattern and provides reusable
+ * methods for handling HTTP requests and responses in a RESTful manner.
+ *
+ * Key Design Principles:
+ * - Template Method Pattern: Defines the skeleton of HTTP handling
+ * - DRY Principle: Common JSON/HTTP logic centralized here
+ * - Single Responsibility: Handles HTTP communication concerns
+ * - Open/Closed Principle: Open for extension (new DTOs), closed for modification
+ * - Dependency Inversion: Depends on JsonSerializable abstraction, not concrete DTOs
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-11
+ */
+<span class="nc" id="L31">public abstract class BaseServlet extends HttpServlet {</span>
+
+    //TODO: Implement Template Method Pattern for handling HTTP requests and responses
+
+    /**
+     * Helper method to get JSON body from request and parse it.
+     * Centralizes request body reading and basic error handling.
+     * 
+     * @param request The HTTP request
+     * @return JSON string from request body
+     * @throws IOException If reading fails
+     */
+    protected String getJsonBody(HttpServletRequest request) throws IOException {
+<span class="nc" id="L44">        return readRequestBody(request);</span>
+    }
+    
+    /**
+     * Helper method to handle common servlet exceptions.
+     * Maps exceptions to appropriate HTTP status codes.
+     * 
+     * @param response The HTTP response
+     * @param e The exception to handle
+     * @throws IOException If writing response fails
+     */
+    protected void handleException(HttpServletResponse response, Exception e) throws IOException {
+        // Default to 500 Internal Server Error
+<span class="nc" id="L57">        int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;</span>
+<span class="nc" id="L58">        String message = &quot;Internal server error&quot;;</span>
+        
+        // Map specific exceptions to appropriate status codes
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (e instanceof IllegalArgumentException) {</span>
+<span class="nc" id="L62">            statusCode = HttpServletResponse.SC_BAD_REQUEST;</span>
+<span class="nc" id="L63">            message = &quot;Invalid request: &quot; + e.getMessage();</span>
+<span class="nc bnc" id="L64" title="All 4 branches missed.">        } else if (e.getMessage() != null &amp;&amp; e.getMessage().contains(&quot;not found&quot;)) {</span>
+<span class="nc" id="L65">            statusCode = HttpServletResponse.SC_NOT_FOUND;</span>
+<span class="nc" id="L66">            message = e.getMessage();</span>
+        }
+        
+<span class="nc" id="L69">        sendErrorResponse(response, statusCode, message);</span>
+<span class="nc" id="L70">    }</span>
+
+    /**
+     * Read the request body as a string.
+     * Used for parsing JSON payloads from POST/PUT requests.
+     *
+     * @param request The HTTP request
+     * @return The request body as a string
+     * @throws IOException If reading fails
+     */
+    protected String readRequestBody(HttpServletRequest request) throws IOException {
+<span class="nc" id="L81">        StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L82">        BufferedReader reader = request.getReader();</span>
+        String line;
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        while ((line = reader.readLine()) != null) {</span>
+<span class="nc" id="L85">            buffer.append(line);</span>
+        }
+<span class="nc" id="L87">        return buffer.toString();</span>
+    }
+
+    /**
+     * Send a JSON response with HTTP 200 OK status.
+     *
+     * @param response The HTTP response
+     * @param object The object to serialize to JSON
+     * @throws IOException If writing fails
+     */
+    protected void sendJsonResponse(HttpServletResponse response, Object object) throws IOException {
+<span class="nc" id="L98">        sendJsonResponse(response, object, HttpServletResponse.SC_OK);</span>
+<span class="nc" id="L99">    }</span>
+
+    /**
+     * Send a JSON response with a specified HTTP status code.
+     *
+     * This method follows the Open/Closed Principle and Dependency Inversion Principle:
+     * - It depends on the JsonSerializable abstraction, not concrete DTO implementations
+     * - New DTOs can be added without modifying this code
+     * - BaseServlet has no knowledge of specific DTO types
+     *
+     * @param response The HTTP response
+     * @param object The object to serialize to JSON (preferably a JsonSerializable)
+     * @param statusCode The HTTP status code (200, 201, 400, etc.)
+     * @throws IOException If writing fails
+     */
+    protected void sendJsonResponse(HttpServletResponse response, Object object, int statusCode) throws IOException {
+        // Set response type and encoding
+<span class="nc" id="L116">        response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L117">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L118">        response.setStatus(statusCode);</span>
+        
+        // Convert to JSON string
+        String jsonString;
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (object instanceof JsonSerializable) {</span>
+<span class="nc" id="L123">            jsonString = ((JsonSerializable) object).toJson();</span>
+<span class="nc" id="L124">        } else {</span>
+<span class="nc" id="L125">            jsonString = JsonHelper.toJson(object);</span>
+        }
+        
+        // Write response
+<span class="nc" id="L129">        PrintWriter writer = response.getWriter();</span>
+<span class="nc" id="L130">        writer.write(jsonString);</span>
+<span class="nc" id="L131">        writer.flush();</span>
+<span class="nc" id="L132">    }</span>
+
+    /**
+     * Send an error response with a message.
+     * Uses ErrorResponse's own toJson() method, following the DTO pattern.
+     *
+     * @param response The HTTP response
+     * @param statusCode The HTTP status code (400, 404, 500, etc.)
+     * @param message The error message
+     * @throws IOException If writing fails
+     */
+    protected void sendErrorResponse(HttpServletResponse response, int statusCode, String message) throws IOException {
+        // Create error object and send as JSON
+<span class="nc" id="L145">        ErrorResponse error = new ErrorResponse(statusCode, message);</span>
+<span class="nc" id="L146">        sendJsonResponse(response, error, statusCode);</span>
+<span class="nc" id="L147">    }</span>
+
+    /**
+     * Extract the resource ID from the request path.
+     * For example, &quot;/api/v1/deals/DEAL-001&quot; returns &quot;DEAL-001&quot;
+     *
+     * @param request The HTTP request
+     * @return The resource ID, or null if not present
+     */
+    protected String extractResourceId(HttpServletRequest request) {
+<span class="nc" id="L157">        String pathInfo = request.getPathInfo();</span>
+<span class="nc bnc" id="L158" title="All 4 branches missed.">        if (pathInfo == null || pathInfo.equals(&quot;/&quot;)) {</span>
+<span class="nc" id="L159">            return null;</span>
+        }
+
+        // Remove leading slash and extract ID
+<span class="nc" id="L163">        String[] parts = pathInfo.substring(1).split(&quot;/&quot;);</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        return parts.length &gt; 0 ? parts[0] : null;</span>
+    }
+
+    /**
+     * Simple error response object for consistent error formatting.
+     */
+    @Getter
+    private static class ErrorResponse implements JsonSerializable {
+        private final int status;
+        private final String message;
+        private final long timestamp;
+
+<span class="nc" id="L176">        public ErrorResponse(int status, String message) {</span>
+<span class="nc" id="L177">            this.status = status;</span>
+<span class="nc" id="L178">            this.message = message;</span>
+<span class="nc" id="L179">            this.timestamp = System.currentTimeMillis();</span>
+<span class="nc" id="L180">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

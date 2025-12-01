@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.security</a> &gt; <span class="el_source">AuthenticationFilter.java</span></div><h1>AuthenticationFilter.java</h1><pre class="source lang-java linenums">package com.se310.store.security;
+
+import com.se310.store.model.User;
+import com.se310.store.service.AuthenticationService;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.util.Optional;
+
+/**
+ * AuthenticationFilter - Servlet filter that authenticates users via HTTP Basic Authentication
+ *
+ * This filter intercepts requests to protected endpoints and validates user credentials.
+ * If authentication succeeds, the User object is stored in the request attribute &quot;authenticatedUser&quot;.
+ * If authentication fails, returns HTTP 401 Unauthorized.
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-11
+ */
+public class AuthenticationFilter implements Filter {
+
+    private AuthenticationService authenticationService;
+
+<span class="nc" id="L27">    public AuthenticationFilter() {</span>
+<span class="nc" id="L28">    }</span>
+
+<span class="nc" id="L30">    public AuthenticationFilter(AuthenticationService authenticationService) {</span>
+<span class="nc" id="L31">        this.authenticationService = authenticationService;</span>
+<span class="nc" id="L32">    }</span>
+
+    /**
+     * Initialize filter - can be used to set up authentication service
+     */
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        // AuthenticationService should be injected via constructor
+        // or obtained from servlet context
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if (authenticationService == null) {</span>
+<span class="nc" id="L42">            ServletContext context = filterConfig.getServletContext();</span>
+<span class="nc" id="L43">            authenticationService = (AuthenticationService) context.getAttribute(&quot;authenticationService&quot;);</span>
+        }
+<span class="nc" id="L45">    }</span>
+
+    /**
+     * Filter method that authenticates requests using HTTP Basic Authentication
+     */
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+
+<span class="nc" id="L54">        HttpServletRequest httpRequest = (HttpServletRequest) request;</span>
+<span class="nc" id="L55">        HttpServletResponse httpResponse = (HttpServletResponse) response;</span>
+
+        // Extract Authorization header
+<span class="nc" id="L58">        String authHeader = httpRequest.getHeader(&quot;Authorization&quot;);</span>
+
+        // Attempt authentication
+<span class="nc" id="L61">        Optional&lt;User&gt; userOpt = authenticationService.authenticateBasic(authHeader);</span>
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if (userOpt.isPresent()) {</span>
+            // Authentication successful - store user in request attribute
+<span class="nc" id="L65">            request.setAttribute(&quot;authenticatedUser&quot;, userOpt.get());</span>
+
+            // Continue with the filter chain
+<span class="nc" id="L68">            chain.doFilter(request, response);</span>
+<span class="nc" id="L69">        } else {</span>
+            // Authentication failed - return 401 Unauthorized with WWW-Authenticate header
+            // This triggers the browser's built-in username/password dialog
+<span class="nc" id="L72">            httpResponse.setHeader(&quot;WWW-Authenticate&quot;, &quot;Basic realm=\&quot;Smart Store Application\&quot;&quot;);</span>
+<span class="nc" id="L73">            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="nc" id="L74">            httpResponse.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L75">            httpResponse.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L76">            httpResponse.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;Unauthorized - Invalid credentials\&quot;}&quot;);</span>
+        }
+<span class="nc" id="L78">    }</span>
+
+    /**
+     * Cleanup method called when filter is destroyed
+     */
+    @Override
+    public void destroy() {
+        // No cleanup needed
+<span class="nc" id="L86">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

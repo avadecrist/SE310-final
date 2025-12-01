@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Store.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.model</a> &gt; <span class="el_source">Store.java</span></div><h1>Store.java</h1><pre class="source lang-java linenums">package com.se310.store.model;
+
+import java.util.*;
+
+/**
+ * Store class implementation representing store of the Store Model Service
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-09-25
+ */
+public class Store {
+
+    private String id;
+    private String address;
+    private String description;
+    // Mark collections as transient to avoid circular reference issues during JSON serialization
+    private final transient Map&lt;String, Aisle&gt; aislesMap;
+    private final transient Map&lt;String, Device&gt; deviceMap;
+    private final transient Map&lt;String, Customer&gt; customerMap;
+    private final transient Map&lt;String, Inventory&gt; inventoryMap;
+    private final transient Map&lt;String, Basket&gt; basketMap;
+
+    /**
+     * Constructor for the Store class
+     * @param id
+     * @param address
+     * @param description
+     */
+<span class="nc" id="L30">    public Store(String id, String address, String description) {</span>
+<span class="nc" id="L31">        this.id = id;</span>
+<span class="nc" id="L32">        this.address = address;</span>
+<span class="nc" id="L33">        this.description = description;</span>
+<span class="nc" id="L34">        this.aislesMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L35">        this.deviceMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L36">        this.customerMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L37">        this.inventoryMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L38">        this.basketMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L39">    }</span>
+
+    /**
+     * Getter method for Store id
+     * @return
+     */
+    public String getId() {
+<span class="nc" id="L46">        return id;</span>
+    }
+
+    /**
+     * Setter method for Store id
+     * @param id
+     */
+    public void setId(String id) {
+<span class="nc" id="L54">        this.id = id;</span>
+<span class="nc" id="L55">    }</span>
+
+    /**
+     * Getter method for Store address
+     * @return
+     */
+    public String getAddress() {
+<span class="nc" id="L62">        return address;</span>
+    }
+
+    /**
+     * Setter method for the Store address
+     * @param address
+     */
+    public void setAddress(String address) {
+<span class="nc" id="L70">        this.address = address;</span>
+<span class="nc" id="L71">    }</span>
+
+    /**
+     * Getter method for the Store description
+     * @return
+     */
+    public String getDescription() {
+<span class="nc" id="L78">        return description;</span>
+    }
+
+    /**
+     * Setter method for the Store description
+     * @param description
+     */
+    public void setDescription(String description) {
+<span class="nc" id="L86">        this.description = description;</span>
+<span class="nc" id="L87">    }</span>
+
+    /**
+     * Add aisle to the Store. If Aisle already exists in the store throw StoreException
+     * @param aisleNumber
+     * @param name
+     * @param description
+     * @param aisleLocation
+     * @return
+     * @throws StoreException
+     */
+    public Aisle addAisle(String aisleNumber, String name, String description, AisleLocation aisleLocation) throws StoreException {
+
+        //Check to see if Aisle already exists
+<span class="nc" id="L101">        Aisle aisle = new Aisle(aisleNumber, name, description, aisleLocation );</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if(this.aislesMap.putIfAbsent(aisleNumber,aisle) != null)</span>
+<span class="nc" id="L103">            throw new StoreException(&quot;Add Aisle&quot;, &quot;Aisle Already Exists&quot;);</span>
+
+<span class="nc" id="L105">        return aisle;</span>
+    }
+
+    /**
+     * Get Aisle from the Store. If Aisle does not exist throw StoreException
+     * @param aisleNumber
+     * @return
+     * @throws StoreException
+     */
+    public Aisle getAisle(String aisleNumber) throws StoreException {
+
+<span class="nc" id="L116">        Aisle aisle = this.aislesMap.get(aisleNumber);</span>
+        //Check to see if Aisle exists in the Store
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        if(aisle == null){</span>
+<span class="nc" id="L119">            throw new StoreException(&quot;Get Aisle&quot;, &quot;Aisle Does Not Exist&quot;);</span>
+        }
+
+<span class="nc" id="L122">        return this.aislesMap.get(aisleNumber);</span>
+    }
+
+    /**
+     * Method for keeping local reference of the Inventory in the Store.
+     * If Inventory already exists in the Store throw StoreException
+     * @param inventory
+     */
+    public void addInventory (Inventory inventory) throws StoreException {
+
+        //Check to see if Inventory already exists in the Store
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if(this.inventoryMap.putIfAbsent(inventory.getId(), inventory) != null)</span>
+<span class="nc" id="L134">            throw new StoreException(&quot;Add Inventory&quot;, &quot;Inventory Already Exists&quot;);</span>
+
+<span class="nc" id="L136">    }</span>
+
+    /**
+     * Method for keeping local reference of the Customer in the Store.
+     * If Customer already exists in the Store throw StoreException
+     * @param customer
+     * @throws StoreException
+     */
+    public void addCustomer(Customer customer) throws StoreException {
+
+        //Check to see if Customer already exists in the Store
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if(this.customerMap.putIfAbsent(customer.getId(), customer) != null)</span>
+<span class="nc" id="L148">            throw new StoreException(&quot;Add Customer&quot;, &quot;Customer Already Exists&quot;);</span>
+<span class="nc" id="L149">    }</span>
+
+    /**
+     * Method for keeping local reference of the Device in the Store.
+     * If Device already exists in the Store throw StoreException
+     * @param device
+     * @throws StoreException
+     */
+    public void addDevice(Device device) throws StoreException {
+
+        //Check to see if Device already exists in the Store
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if(this.deviceMap.putIfAbsent(device.getId(), device) != null)</span>
+<span class="nc" id="L161">            throw new StoreException(&quot;Add Device&quot;, &quot;Device Already Exists&quot;);</span>
+
+<span class="nc" id="L163">    }</span>
+
+    /**
+     * Method for keeping local reference of the Basket in the Store.
+     * If Basket already exists in the Store throw StoreException
+     * @param basket
+     * @throws StoreException
+     */
+    public void addBasket(Basket basket) throws StoreException {
+        //Check to see if basket already exists in the Store
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if(this.basketMap.putIfAbsent(basket.getId(), basket) != null)</span>
+<span class="nc" id="L174">            throw new StoreException(&quot;Add Device&quot;, &quot;Device Already Exists&quot;);</span>
+
+<span class="nc" id="L176">    }</span>
+
+    /**
+     * Method getting Customer by Id
+     * @param customerId
+     * @return
+     */
+    public Customer getCustomer(String customerId){
+<span class="nc" id="L184">        return this.customerMap.get(customerId);</span>
+    }
+
+    /**
+     * Method for removing Customer from the Store
+     * @param customer
+     */
+    public void removeCustomer(Customer customer){
+
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        if(this.customerMap.get(customer.getId()) == null){</span>
+<span class="nc" id="L194">            this.customerMap.remove(customer.getId());</span>
+        }
+<span class="nc" id="L196">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L200">        return &quot;Store{&quot; +</span>
+                &quot;id='&quot; + id + '\'' +
+                &quot;, address='&quot; + address + '\'' +
+                &quot;, description='&quot; + description + '\'' +
+                &quot;, aislesMap=&quot; + aislesMap +
+                &quot;, deviceMap=&quot; + deviceMap +
+                &quot;, customerMap=&quot; + customerMap +
+                &quot;, inventoryMap=&quot; + inventoryMap +
+                &quot;, basketMap=&quot; + basketMap +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">final</a> &gt; <a href="index.source.html" class="el_package">com.se310.store.dto</a> &gt; <span class="el_source">UserMapper.java</span></div><h1>UserMapper.java</h1><pre class="source lang-java linenums">package com.se310.store.dto;
+
+import com.se310.store.model.User;
+import com.se310.store.model.UserRole;
+
+/**
+ * UserMapper implements the DTO Pattern for User entities.
+ * Provides transformation between User domain objects and DTOs to separate
+ * internal representation from API responses (e.g., hiding sensitive data like passwords).
+ *
+ * @author  Sergey L. Sundukovskiy
+ * @version 1.0
+ * @since   2025-11-11
+ */
+<span class="nc" id="L15">public class UserMapper {</span>
+
+    //TODO: Implement Data Transfer Object for User entity
+    //TODO: Implement Factory methods for User DTOs
+
+    /**
+     * UserDTO - Data Transfer Object for User
+     */
+    public static class UserDTO implements JsonSerializable {
+        private String email;
+        private String name;
+        private String role;
+
+<span class="nc" id="L28">        public UserDTO() {</span>
+<span class="nc" id="L29">        }</span>
+
+<span class="nc" id="L31">        public UserDTO(String email, String name, String role) {</span>
+<span class="nc" id="L32">            this.email = email;</span>
+<span class="nc" id="L33">            this.name = name;</span>
+<span class="nc" id="L34">            this.role = role;</span>
+<span class="nc" id="L35">        }</span>
+
+        @Override
+        public String toJson() {
+<span class="nc" id="L39">            UserDTO copy = new UserDTO(email, name, role);</span>
+<span class="nc" id="L40">            return JsonHelper.toJson(copy);</span>
+        }
+
+        public String getEmail() {
+<span class="nc" id="L44">            return email;</span>
+        }
+
+        public void setEmail(String email) {
+<span class="nc" id="L48">            this.email = email;</span>
+<span class="nc" id="L49">        }</span>
+
+        public String getName() {
+<span class="nc" id="L52">            return name;</span>
+        }
+
+        public void setName(String name) {
+<span class="nc" id="L56">            this.name = name;</span>
+<span class="nc" id="L57">        }</span>
+
+        public String getRole() {
+<span class="nc" id="L60">            return role;</span>
+        }
+
+        public void setRole(String role) {
+<span class="nc" id="L64">            this.role = role;</span>
+<span class="nc" id="L65">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
