@@ -108,7 +108,7 @@ public class StoreManagementCLIClient {
             StoreRepository storeRepository = new StoreRepository(dataManager);
 
             // Initialize services
-            storeService = new StoreService();
+            storeService = new StoreService(storeRepository); // use constructor with StoreRepository
             authenticationService = new AuthenticationService(userRepository, storeRepository);
             System.out.println("[OK] Local services initialized");
             System.out.println();
@@ -528,7 +528,7 @@ public class StoreManagementCLIClient {
         }
 
         try {
-        Product product = storeService.showProduct(productId, null); //CHANGE NULL TO TOKEN LATER??
+        Product product = storeService.showProduct(productId, null); 
 
         System.out.println("\n--- Product Details ---");
         System.out.println(product);
@@ -585,7 +585,7 @@ public class StoreManagementCLIClient {
         }
     
         try {
-            Product product = storeService.provisionProduct(productId, name, description, size, category, price, temperature, null); //CHANGE NULL TO TOKEN LATER??
+            Product product = storeService.provisionProduct(productId, name, description, size, category, price, temperature, null); 
             System.out.println("\n--- Created Product ---");
             System.out.println(product);
         } catch (StoreException e) {
@@ -635,7 +635,7 @@ public class StoreManagementCLIClient {
         }
 
         try {
-            Customer customer = storeService.showCustomer(customerId, null); //CHANGE NULL TO TOKEN LATER??
+            Customer customer = storeService.showCustomer(customerId, null); 
 
             System.out.println("\n--- Customer Details ---");
             System.out.println(customer);
@@ -680,7 +680,7 @@ public class StoreManagementCLIClient {
         }
 
         try {
-            Customer customer = storeService.provisionCustomer(customerId, firstName, lastName, type, email, address, null); //CHANGE NULL TO TOKEN LATER??
+            Customer customer = storeService.provisionCustomer(customerId, firstName, lastName, type, email, address, null); 
 
             System.out.println("\n--- Registered Customer ---");
             System.out.println(customer);

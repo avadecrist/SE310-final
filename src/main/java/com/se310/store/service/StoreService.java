@@ -7,6 +7,7 @@ import com.se310.store.repository.*;
 
 import java.sql.Timestamp;
 import java.sql.SQLException;
+import java.sql.ResultSet;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Map;
@@ -78,6 +79,79 @@ public class StoreService {
                 }
             }
         }
+
+        // ---- PRODUCTS ----
+        // Load all products from the database and populate productMap
+        try (ResultSet rs = dataManager.findAllProducts()) {
+
+            while (rs.next()) {
+                String id = rs.getString("id");
+                String name = rs.getString("name");
+                String description = rs.getString("description");
+                String size = rs.getString("size");
+                String category = rs.getString("category");
+                double price = rs.getDouble("price");
+                Temperature temperature = Temperature.valueOf(rs.getString("temperature"));
+
+                Product product = new Product(id, name, description, size, category, price, temperature);
+
+                if (id != null && !id.isBlank()) {
+                    productMap.put(id, product);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to load products from database", e);
+        }
+
+        // ---- CUSTOMERS ----
+        try (ResultSet rs = dataManager.findAllCustomers()) {
+
+        while (rs.next()) {
+            String id = rs.getString("id");
+            String firstName = rs.getString("first_name");
+            String lastName = rs.getString("last_name");
+            String customerType = rs.getString("customer_type");
+            String email = rs.getString("email");
+            String accountAddress = rs.getString("account_address");
+            String storeId = rs.getString("store_id");
+            String aisleNumber = rs.getString("aisle_number");
+            Timestamp lastSeenTs = rs.getTimestamp("last_seen");
+
+            // Build domain Customer
+            CustomerType type = CustomerType.valueOf(customerType);
+            Customer customer = new Customer(id, firstName, lastName, type, email, accountAddress);
+
+            // Restore lastSeen if present
+            if (lastSeenTs != null) {
+                customer.setLastSeen(new java.util.Date(lastSeenTs.getTime()));
+            }
+
+            // Restore store location + attach to Store if we have a storeId
+            if (storeId != null && !storeId.isBlank()) {
+                Store store = storeMap.get(storeId);
+                if (store != null) {
+                    StoreLocation location = new StoreLocation(storeId, aisleNumber);
+                    customer.setStoreLocation(location);
+                    try {
+                        store.addCustomer(customer);   
+                    } catch (StoreException e) {
+                        System.err.println("Warning: failed to attach customer " + id +
+                                       " to store " + storeId + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // Add to customer map
+            if (id != null && !id.isBlank()) {
+                customerMap.put(id, customer);
+            }
+        }
+
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to load customers from database", e);
+        }
+        
     }
 
     /**
