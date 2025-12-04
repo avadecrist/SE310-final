@@ -46,7 +46,7 @@ public class UserRepository {
     }
 
     
-    public User save(User user) {
+    public User save(User user) { 
         if (user == null) {
             throw new NullPointerException("User must not be null");
         }

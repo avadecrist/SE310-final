@@ -87,11 +87,11 @@ public class SmartStoreApplication {
         // Step 3: Create services (Business Logic Layer)
         logger.info("Creating services...");
         StoreService storeService = new StoreService(storeRepository);
-        AuthenticationService userService = new AuthenticationService(userRepository);
+        AuthenticationService userService = new AuthenticationService(userRepository, storeRepository);
 
         // Step 4: Create controllers (Presentation Layer)
         logger.info("Creating controllers...");
-        StoreController storeController = new StoreController(storeService);
+        StoreController storeController = new StoreController(storeService, userService);
         UserController userController = new UserController(userService);
 
         // Step 5: Configure and start Tomcat

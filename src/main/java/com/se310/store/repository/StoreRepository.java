@@ -16,7 +16,7 @@ import java.util.*;
  * @version 1.0
  * @since   2025-11-06
  */
-public class StoreRepository {
+public class StoreRepository  {
 
     //TODO: Implement Store persistence layer using Repository Pattern
 

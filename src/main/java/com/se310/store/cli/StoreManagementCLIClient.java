@@ -4,6 +4,7 @@ import com.se310.store.config.ConfigLoader;
 import com.se310.store.data.DataManager;
 import com.se310.store.model.*;
 import com.se310.store.repository.UserRepository;
+import com.se310.store.repository.StoreRepository;
 import com.se310.store.service.AuthenticationService;
 import com.se310.store.service.StoreService;
 
@@ -104,11 +105,11 @@ public class StoreManagementCLIClient {
             // Initialize DataManager and repositories
             DataManager dataManager = DataManager.getInstance();
             UserRepository userRepository = new UserRepository(dataManager);
+            StoreRepository storeRepository = new StoreRepository(dataManager);
 
             // Initialize services
             storeService = new StoreService();
-            authenticationService = new AuthenticationService(userRepository);
-
+            authenticationService = new AuthenticationService(userRepository, storeRepository);
             System.out.println("[OK] Local services initialized");
             System.out.println();
         } catch (Exception e) {

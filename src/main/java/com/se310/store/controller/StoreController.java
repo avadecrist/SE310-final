@@ -2,7 +2,9 @@ package com.se310.store.controller;
 
 import com.se310.store.dto.StoreMapper;
 import com.se310.store.dto.StoreMapper.StoreDTO;
+import com.se310.store.service.AuthenticationService;
 import com.se310.store.model.Store;
+import com.se310.store.model.User;
 import com.se310.store.model.StoreException;
 import com.se310.store.service.StoreService;
 import com.se310.store.servlet.BaseServlet;
@@ -12,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * REST API controller for Store operations
@@ -31,9 +34,11 @@ public class StoreController extends BaseServlet {
     //TODO: Implement Controller for Store operations, part of the MVC Pattern
 
     private final StoreService storeService;
+    private final AuthenticationService authenticationService;
 
-    public StoreController(StoreService storeService) {
+    public StoreController(StoreService storeService, AuthenticationService authenticationService) {
         this.storeService = storeService;
+        this.authenticationService = authenticationService;
     }
 
     /**
@@ -44,9 +49,24 @@ public class StoreController extends BaseServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            // Authenticate
+                Optional<User> userOpt = authenticate(request, response);
+                if (userOpt.isEmpty()) {
+                    return; // 401 already sent
+                }
+
+            User user = userOpt.get();
+
             String storeId = extractResourceId(request);
             
             if (storeId == null) {
+                // Authphorize
+                if (!authenticationService.canViewStores(user)) {
+                    sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                            "Not authorized to view stores");
+                    return;
+                }
+
                 // Get all stores
                 Collection<Store> stores = storeService.getAllStores();
                 Collection<StoreDTO> storeDTOs = stores.stream()
@@ -54,6 +74,13 @@ public class StoreController extends BaseServlet {
                     .collect(Collectors.toList());
                 sendJsonResponse(response, storeDTOs);
             } else {
+                // Authorize single store view
+                if (!authenticationService.canViewStore(user, storeId)) {
+                    sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                            "Not authorized to view store: " + storeId);
+                    return;
+                }
+
                 // Get specific store
                 Store store = storeService.showStore(storeId, null);
                 if (store == null) {
@@ -76,6 +103,20 @@ public class StoreController extends BaseServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            // Authenticate
+            Optional<User> userOpt = authenticate(request, response);
+            if (userOpt.isEmpty()) {
+                return; // 401 already sent
+            }
+            User user = userOpt.get();
+
+            // Authorize 
+            if (!authenticationService.canCreateStore(user)) {
+                sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Not authorized to create stores");
+                return;
+            }
+
             // Get parameters from request
             String storeId = request.getParameter("storeId");
             String name = request.getParameter("name");
@@ -105,10 +146,24 @@ public class StoreController extends BaseServlet {
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            // Authenticate
+            Optional<User> userOpt = authenticate(request, response);
+            if (userOpt.isEmpty()) {
+                return; // 401 already sent
+            }
+            User user = userOpt.get();
+
             String storeId = extractResourceId(request);
             if (storeId == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
                     "Store ID is required in path");
+                return;
+            }
+
+            // Authorize
+            if (!authenticationService.canUpdateStore(user, storeId)) {
+                sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Not authorized to update store: " + storeId);
                 return;
             }
             
@@ -139,10 +194,24 @@ public class StoreController extends BaseServlet {
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            // Authenticate
+            Optional<User> userOpt = authenticate(request, response);
+            if (userOpt.isEmpty()) {
+                return; // 401 already sent
+            }
+            User user = userOpt.get();
+
             String storeId = extractResourceId(request);
             if (storeId == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
                     "Store ID is required in path");
+                return;
+            }
+
+            // Authorize
+            if (!authenticationService.canDeleteStore(user, storeId)) {
+                sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Not authorized to delete store: " + storeId);
                 return;
             }
             
@@ -155,5 +224,21 @@ public class StoreController extends BaseServlet {
         } catch (Exception e) {
             handleException(response, e);
         }
+    }
+
+    /**
+     * Helper: authenticate the user using HTTP Basic auth.
+     * If authentication fails, sends 401 and returns Optional.empty().
+     */
+    private Optional<User> authenticate(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authHeader = request.getHeader("Authorization");
+        Optional<User> userOpt = authenticationService.authenticateBasic(authHeader);
+
+        if (userOpt.isEmpty()) {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or missing credentials");
+        }
+
+
+        return userOpt;
     }
 }

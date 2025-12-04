@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.Optional;        
 
 /**
  * REST API controller for User operations
@@ -44,6 +45,13 @@ public class UserController extends BaseServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            // Authenticate
+            Optional<User> userOpt = authenticate(request, response);
+            if (userOpt.isEmpty()) {
+                return; // 401 already sent
+            }
+            User currentUser = userOpt.get();
+
             String email = extractResourceId(request);
             
             if (email == null) {
@@ -81,16 +89,16 @@ public class UserController extends BaseServlet {
             String password = request.getParameter("password");
             String name = request.getParameter("name");
             String roleStr = request.getParameter("role");
-            
+
             // Basic validation
             if (email == null || password == null || name == null) {
-                sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
-                    "Missing required parameters: email, password, name");
+                sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST,
+                        "Missing required parameters: email, password, name");
                 return;
             }
 
-            // Convert role to User role enum
-            UserRole role = null;
+            // Convert role to UserRole enum (default to USER if not provided)
+            UserRole role;
             if (roleStr != null && !roleStr.isBlank()) {
                 try {
                     role = UserRole.valueOf(roleStr.toUpperCase());
@@ -99,13 +107,15 @@ public class UserController extends BaseServlet {
                             "Invalid role: " + roleStr + ". Allowed: ADMIN, MANAGER, USER");
                     return;
                 }
+            } else {
+                role = UserRole.USER;
             }
 
             // Create user through authentication service
             User user = authenticationService.registerUser(email, password, name, role);
             UserDTO userDTO = UserMapper.toDTO(user);
             sendJsonResponse(response, userDTO, HttpServletResponse.SC_CREATED);
-            
+
         } catch (Exception e) {
             handleException(response, e);
         }
@@ -118,10 +128,25 @@ public class UserController extends BaseServlet {
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            // Authenticate
+            Optional<User> userOpt = authenticate(request, response);
+            if (userOpt.isEmpty()) {
+                return; // 401 already sent
+            }
+            User currentUser = userOpt.get();
+
             String email = extractResourceId(request);
             if (email == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
                     "Email is required in path");
+                return;
+            }
+
+            // ADMIN can update anyone, normal users can only update themselves
+            if (currentUser.getRole() != UserRole.ADMIN &&
+                    !currentUser.getEmail().equalsIgnoreCase(email)) {
+                sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Not authorized to update this user");
                 return;
             }
             
@@ -152,6 +177,13 @@ public class UserController extends BaseServlet {
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            // Authenticate
+            Optional<User> userOpt = authenticate(request, response);
+            if (userOpt.isEmpty()) {
+                return; // 401 already sent
+            }
+            User currentUser = userOpt.get();
+
             String email = extractResourceId(request);
             if (email == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
@@ -159,6 +191,14 @@ public class UserController extends BaseServlet {
                 return;
             }
             
+            // ADMIN can delete any user; a user can delete themselves
+            if (currentUser.getRole() != UserRole.ADMIN &&
+                    !currentUser.getEmail().equalsIgnoreCase(email)) {
+                sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Not authorized to delete this user");
+                return;
+            }
+
             // Delete through authentication service
             boolean deleted = authenticationService.deleteUser(email);
             if (!deleted) {
@@ -173,5 +213,20 @@ public class UserController extends BaseServlet {
         } catch (Exception e) {
             handleException(response, e);
         }
+    }
+
+    /**
+     * Helper: authenticate the user using HTTP Basic auth.
+     * If authentication fails, sends 401 and returns Optional.empty().
+     */
+    private Optional<User> authenticate(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authHeader = request.getHeader("Authorization");
+        Optional<User> userOpt = authenticationService.authenticateBasic(authHeader);
+
+        if (userOpt.isEmpty()) {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or missing credentials");
+        }
+
+        return userOpt;
     }
 }

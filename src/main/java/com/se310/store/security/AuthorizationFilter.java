@@ -20,7 +20,7 @@ import java.io.IOException;
  * @version 1.0
  * @since   2025-11-11
  */
-public class AuthorizationFilter implements Filter {
+public class AuthorizationFilter implements Filter { 
 
     //TODO: Only ADMIN users can perform operations associated with Store building
 
