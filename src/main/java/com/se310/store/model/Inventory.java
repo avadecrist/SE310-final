@@ -38,7 +38,7 @@ public class Inventory {
      * Getter method for Inventory id
      * @return
      */
-    public String getId() {
+    public String getId() { 
         return id;
     }
 

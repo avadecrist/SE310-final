@@ -2,11 +2,16 @@ package com.se310.store.service;
 
 import com.se310.store.data.DataManager;
 import com.se310.store.model.*;
+import com.se310.store.model.AisleLocation;
 import com.se310.store.repository.*;
 
 import java.sql.Timestamp;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collection;
 
 /**
  * This is the main service of the system implementing Command API for processing CLI commands and
@@ -57,6 +62,22 @@ public class StoreService {
      */
     private void loadAllDataFromDatabase() {
         //TODO: Load store data into the maps
+        clearAllMaps();
+
+        if (storeRepository != null) {
+            for (Store store : storeRepository.findAll()) {
+                if (store != null && store.getId() != null && !store.getId().isBlank()) {
+                    storeMap.put(store.getId(), store);
+                }
+            }
+        } else {
+            // load directly from DataManager if repository is not wired
+            for (Store store : dataManager.getAllStores()) {
+                if (store != null && store.getId() != null && !store.getId().isBlank()) {
+                    storeMap.put(store.getId(), store);
+                }
+            }
+        }
     }
 
     /**
@@ -72,8 +93,7 @@ public class StoreService {
     }
 
 
-    public Store provisionStore(String storeId, String name, String address, String token)
-            throws StoreException {
+    public Store provisionStore(String storeId, String name, String address, String token) throws StoreException {
 
         Store store = new Store(storeId, address, name);
 
@@ -83,7 +103,16 @@ public class StoreService {
         }
 
         //TODO: Persist Store to database
-
+        try {
+            if (storeRepository != null) {
+                storeRepository.save(store);
+            } else {
+                dataManager.persistStore(store);
+            }
+        } catch (Exception e) {
+            throw new StoreException("Provision Store",
+                    "Failed to save Store to database: " + e.getMessage());
+        }
         return store;
     }
 
@@ -251,7 +280,24 @@ public class StoreService {
         inventory.updateInventory(count);
 
         //TODO: Persist inventory update to database
-
+        try {
+            InventoryLocation location = inventory.getInventoryLocation();
+            String storeId = (location != null) ? location.getStoreId() : null;
+            String aisleNumber = (location != null) ? location.getAisleId() : null;
+            String shelfId = (location != null) ? location.getShelfId() : null;
+            dataManager.saveInventory(
+            inventory.getId(),
+            storeId,
+            aisleNumber,
+            shelfId,
+            inventory.getCapacity(),
+            inventory.getCount(), // updated count
+            inventory.getProductId(),
+            inventory.getType().name());
+        } catch (Exception e) {
+            throw new StoreException("Update Inventory",
+                    "Failed to update Inventory in database: " + e.getMessage());
+        }
         return inventory;
     }
 
@@ -264,6 +310,19 @@ public class StoreService {
             throw new StoreException("Provision Product", "Product Already Exists");
 
         //TODO: Persist to database
+        try {
+            dataManager.saveProduct(
+                    product.getId(),                 
+                    product.getName(),               
+                    product.getDescription(),        
+                    product.getSize(),               
+                    product.getCategory(),           
+                    product.getPrice(),              
+                    product.getTemperature().name());
+        } catch (SQLException e) {
+            throw new StoreException("Provision Product",
+                    "Failed to save Product to database: " + e.getMessage());
+        }
 
         return product;
     }
@@ -287,6 +346,22 @@ public class StoreService {
             throw new StoreException("Provision Customer", "Customer Already Exists");
 
         //TODO: Persist to database
+        // Persist to database
+    try {
+        dataManager.saveCustomer(
+                customer.getId(),                        
+                customer.getFirstName(),                 
+                customer.getLastName(),                  
+                customer.getType().name(),               
+                customer.getEmail(),                     
+                customer.getAccountAddress(),                   
+                null,                                    
+                null,                                    
+                null);
+    } catch (SQLException e) {
+        throw new StoreException("Provision Customer",
+                "Failed to save Customer to database: " + e.getMessage());
+    }
 
         return customer;
     }
@@ -342,6 +417,30 @@ public class StoreService {
         }
 
         //TODO: Persist customer location update to database
+        try {
+            StoreLocation location = customer.getStoreLocation();
+            String currentStoreId = (location != null) ? location.getStoreId() : null;
+            String currentAisleNumber = (location != null) ? location.getAisleId() : null;
+
+            java.sql.Timestamp lastSeenTs = null;
+            if (customer.getLastSeen() != null) {
+                lastSeenTs = new java.sql.Timestamp(customer.getLastSeen().getTime());
+            }
+
+            dataManager.saveCustomer(
+                    customer.getId(),
+                    customer.getFirstName(),
+                    customer.getLastName(),
+                    customer.getType().name(),
+                    customer.getEmail(),
+                    customer.getAccountAddress(),
+                    currentStoreId,
+                    currentAisleNumber,
+                    lastSeenTs);
+        } catch (SQLException e) {
+            throw new StoreException("Update Customer",
+                    "Failed to update Customer in database: " + e.getMessage());
+        }
 
         return customer;
     }
@@ -364,6 +463,16 @@ public class StoreService {
             throw new StoreException("Provision Basket", "Basket Already Exists");
 
         //TODO: Persist Basket to database
+        try {
+            dataManager.saveBasket(
+                    basket.getId(),  
+                    null,             // customer id
+                    null              // store id
+            );
+        } catch (SQLException e) {
+            throw new StoreException("Provision Basket",
+                    "Failed to save Basket to database: " + e.getMessage());
+        }
 
         return basket;
     }
@@ -525,6 +634,17 @@ public class StoreService {
                 store.addDevice(device);
 
                 //TODO: Persist Device to database
+                try {
+                    dataManager.saveDevice(
+                            deviceId,    
+                            name,        
+                            deviceType,  
+                            storeId,     
+                            aisleNumber);
+                } catch (SQLException e) {
+                    throw new StoreException("Provision Device",
+                            "Failed to save Device to database: " + e.getMessage());
+                }
             }
         }
         return device;
@@ -586,6 +706,15 @@ public class StoreService {
         }
 
         //TODO: Update Store data in database
+        try {
+            dataManager.saveStore(
+                    store.getId(),        
+                    store.getAddress(),   
+                    store.getDescription());
+        } catch (SQLException e) {
+            throw new StoreException("Update Store",
+                    "Failed to update Store in database: " + e.getMessage());
+        }
 
         return store;
     }
@@ -600,5 +729,20 @@ public class StoreService {
         }
 
         //TODO: Delete data from database
+        try {
+        boolean deleted = dataManager.deleteStore(storeId);
+
+        if (!deleted) {
+            storeMap.put(storeId, store);
+            throw new StoreException("Delete Store",
+                    "Failed to delete store from database (store not found in DB)");
+            }
+
+        } catch (SQLException e) {
+            storeMap.put(storeId, store);
+            throw new StoreException("Delete Store",
+                    "Database error while deleting store: " + e.getMessage());
+        }
+
     }
 }
